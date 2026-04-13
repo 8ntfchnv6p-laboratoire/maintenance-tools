@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template Diagnostic Terrain — Maintenance Industrielle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1114;
+    --surface: #1a1d23;
+    --surface-2: #22262e;
+    --border: #2e333d;
+    --border-accent: #f59e0b;
+    --text: #e4e4e7;
+    --text-dim: #8b8fa3;
+    --accent: #f59e0b;
+    --accent-dim: #b47316;
+    --red: #ef4444;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 24px;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 16px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .header h1 {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  /* Sections */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .section-header {
+    background: var(--surface-2);
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: default;
+  }
+  .section-header h2 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .section-header .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-weight: 600;
+  }
+  .tag-required { background: var(--red); color: #fff; }
+  .tag-optional { background: var(--border); color: var(--text-dim); }
+  .tag-critical { background: var(--accent); color: var(--bg); }
+
+  .section-body { padding: 16px; }
+
+  /* Textarea */
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 12px;
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea::placeholder {
+    color: var(--text-dim);
+    opacity: 0.6;
+  }
+
+  /* Inline fields */
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .field-row.triple {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 10px;
+    transition: border-color 0.2s;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* Hint text */
+  .hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* Output section */
+  .section.output { border-left-color: var(--green); }
+  .section.output .section-header h2 { color: var(--green); }
+
+  .section.safety { border-left-color: var(--red); }
+  .section.safety .section-header h2 { color: var(--red); }
+
+  /* LOTO banner */
+  .loto-banner {
+    background: linear-gradient(90deg, #7f1d1d, #991b1b);
+    border: 1px solid var(--red);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .loto-banner .icon {
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .loto-banner .text {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: #fca5a5;
+    line-height: 1.5;
+  }
+
+  /* Buttons */
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  button {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary:hover { background: #fbbf24; }
+  .btn-secondary {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid #7f1d1d;
+  }
+  .btn-danger:hover { border-color: var(--red); }
+
+  /* Variant toggles */
+  .variant-toggles {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .variant-toggle {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .variant-toggle:hover { border-color: var(--accent); color: var(--text); }
+  .variant-toggle.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(245, 158, 11, 0.08);
+  }
+
+  .variant-section { display: none; }
+  .variant-section.visible { display: block; }
+
+  /* Copy feedback */
+  .copy-feedback {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--green);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 4px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .copy-feedback.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .field-row, .field-row.triple { grid-template-columns: 1fr; }
+    .actions { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div>
+      <h1>⚙ Diagnostic Terrain</h1>
+      <div class="subtitle">Template prompt — Claude × Maintenance Industrielle</div>
+    </div>
+    <div class="subtitle" id="dateDisplay"></div>
+  </div>
+
+  <!-- LOTO -->
+  <div class="loto-banner">
+    <div class="icon">🔒</div>
+    <div class="text">
+      LOTO — Avant toute intervention sur puissance, condensateurs variateur, pneumatique ou hydraulique :<br>
+      Consignation · Vérification absence d'énergie · Cadenas personnel
+    </div>
+  </div>
+
+  <!-- IDENTIFICATION -->
+  <div class="section">
+    <div class="section-header">
+      <h2>① Identification</h2>
+      <span class="tag tag-required">Requis</span>
+    </div>
+    <div class="section-body">
+      <div class="field-row triple">
+        <div class="field">
+          <label>Machine</label>
+          <input type="text" id="machine" placeholder="HOMAG TBH501">
+        </div>
+        <div class="field">
+          <label>Section</label>
+          <input type="text" id="section" placeholder="451">
+        </div>
+        <div class="field">
+          <label>Axe / Organe</label>
+          <input type="text" id="axe" placeholder="N30R — avance droit">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Variateur / PLC</label>
+          <input type="text" id="variateur" placeholder="KEB F5, fw 2.3">
+        </div>
+        <div class="field">
+          <label>Mode contrôle</label>
+          <input type="text" id="modeCtrl" placeholder="Vectoriel / U/f / Servo">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYMPTÔME -->
+  <div class="section">
+    <div class="section-header">
+      <h2>② Symptôme</h2>
+      <span class="tag tag-required">Requis</span>
+    </div>
+    <div class="section-body">
+      <textarea id="symptome" rows="3" placeholder="Ce que tu observes : comportement machine, message HMI, voyants..."></textarea>
+      <div class="field-row" style="margin-top:12px;">
+        <div class="field">
+          <label>Fréquence</label>
+          <input type="text" id="frequence" placeholder="Permanent / Intermittent / Après X">
+        </div>
+        <div class="field">
+          <label>Depuis quand</label>
+          <input type="text" id="depuis" placeholder="Ce matin / 3 jours / Après intervention">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CODES ERREUR -->
+  <div class="section">
+    <div class="section-header">
+      <h2>③ Codes erreur</h2>
+      <span class="tag tag-required">Requis</span>
+    </div>
+    <div class="section-body">
+      <textarea id="codes" rows="2" placeholder="F08 (overcurrent), registre xx, journal bus..."></textarea>
+    </div>
+  </div>
+
+  <!-- CONTEXTE -->
+  <div class="section">
+    <div class="section-header">
+      <h2>④ Contexte</h2>
+      <span class="tag tag-required">Requis</span>
+    </div>
+    <div class="section-body">
+      <textarea id="contexte" rows="3" placeholder="Événement déclencheur, mode (production/réglage/mise en route), conditions atelier..."></textarea>
+    </div>
+  </div>
+
+  <!-- DÉJÀ VÉRIFIÉ -->
+  <div class="section safety">
+    <div class="section-header">
+      <h2>⑤ Déjà vérifié</h2>
+      <span class="tag tag-critical">Critique</span>
+    </div>
+    <div class="section-body">
+      <textarea id="verifie" rows="5" placeholder="- Isolement moteur : >50 MΩ&#10;- Câblage U/V/W : continuité OK&#10;- Courant mesuré : 4.2A (nom. 3.8A)&#10;- E/S PLC : B051=TRUE, B052=FALSE&#10;- Mécanique : accouplement vérifié"></textarea>
+      <div class="hint">Plus tu remplis ici, moins Claude te redemande ce que tu as déjà fait.</div>
+    </div>
+  </div>
+
+  <!-- SECTIONS OPTIONNELLES -->
+  <div style="margin: 20px 0 12px;">
+    <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Sections optionnelles :</div>
+    <div class="variant-toggles">
+      <button class="variant-toggle" onclick="toggleVariant('reseau')">+ Réseau bus</button>
+      <button class="variant-toggle" onclick="toggleVariant('intervention')">+ Après intervention</button>
+      <button class="variant-toggle" onclick="toggleVariant('photos')">+ Photos / Captures</button>
+    </div>
+  </div>
+
+  <!-- RÉSEAU -->
+  <div class="section variant-section" id="var-reseau">
+    <div class="section-header">
+      <h2>⑥ Réseau bus</h2>
+      <span class="tag tag-optional">Optionnel</span>
+    </div>
+    <div class="section-body">
+      <div class="field-row triple">
+        <div class="field">
+          <label>Type bus</label>
+          <input type="text" id="busType" placeholder="CANopen / EtherCAT / Profinet">
+        </div>
+        <div class="field">
+          <label>Voyants</label>
+          <input type="text" id="busVoyants" placeholder="Run=vert fixe, Error=rouge cligno">
+        </div>
+        <div class="field">
+          <label>Terminaison</label>
+          <input type="text" id="busTerm" placeholder="Vérifiée / Non vérifiée">
+        </div>
+      </div>
+      <textarea id="busNotes" rows="2" placeholder="Topologie, position nœud, câblage, blindage..."></textarea>
+    </div>
+  </div>
+
+  <!-- APRÈS INTERVENTION -->
+  <div class="section variant-section" id="var-intervention">
+    <div class="section-header">
+      <h2>⑥ Dernière intervention</h2>
+      <span class="tag tag-optional">Optionnel</span>
+    </div>
+    <div class="section-body">
+      <textarea id="intervention" rows="3" placeholder="- Quoi : remplacement variateur&#10;- Quand : hier&#10;- Pièces changées / paramètres modifiés"></textarea>
+    </div>
+  </div>
+
+  <!-- PHOTOS -->
+  <div class="section variant-section" id="var-photos">
+    <div class="section-header">
+      <h2>⑥ Photos / Captures</h2>
+      <span class="tag tag-optional">Optionnel</span>
+    </div>
+    <div class="section-body">
+      <textarea id="photos" rows="2" placeholder="Rappel : coller les images directement dans Claude après le prompt texte.&#10;Décrire ici ce que montrent les photos jointes."></textarea>
+    </div>
+  </div>
+
+  <!-- CE QUE J'ATTENDS -->
+  <div class="section output">
+    <div class="section-header">
+      <h2>⑦ Ce que j'attends</h2>
+      <span class="tag tag-required">Requis</span>
+    </div>
+    <div class="section-body">
+      <textarea id="attente" rows="4" placeholder="→ Top 3 causes probables classées par probabilité&#10;→ Points de mesure précis pour confirmer/éliminer&#10;→ État E/S et bits de diagnostic à vérifier&#10;→ Procédure de correction si cause confirmée">→ Top 3 causes probables classées par probabilité
+→ Points de mesure précis pour confirmer/éliminer
+→ État E/S et bits de diagnostic à vérifier
+→ Procédure de correction si cause confirmée</textarea>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn-primary" onclick="copyPrompt()">📋 Copier le prompt</button>
+    <button class="btn-secondary" onclick="saveLocal()">💾 Sauvegarder brouillon</button>
+    <button class="btn-secondary" onclick="loadLocal()">📂 Charger brouillon</button>
+    <button class="btn-danger" onclick="clearAll()">✕ Réinitialiser</button>
+  </div>
+
+</div>
+
+<div class="copy-feedback" id="copyFeedback">✓ Prompt copié — colle dans Claude</div>
+
+<script>
+  // Date
+  document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('fr-CA');
+
+  // Toggle variants
+  function toggleVariant(name) {
+    const el = document.getElementById('var-' + name);
+    const btn = event.target;
+    el.classList.toggle('visible');
+    btn.classList.toggle('active');
+  }
+
+  // Build prompt text
+  function buildPrompt() {
+    const v = (id) => document.getElementById(id)?.value?.trim() || '';
+    let p = '## DIAGNOSTIC TERRAIN\n\n';
+
+    // Identification
+    const machine = v('machine');
+    const section = v('section');
+    const axe = v('axe');
+    const variateur = v('variateur');
+    const modeCtrl = v('modeCtrl');
+
+    if (machine || section || axe) {
+      p += '**Machine :** ' + [machine, section ? 'section ' + section : ''].filter(Boolean).join(', ') + '\n';
+      if (variateur) p += '**Variateur/PLC :** ' + variateur + (modeCtrl ? ' — ' + modeCtrl : '') + '\n';
+      if (axe) p += '**Axe/Organe :** ' + axe + '\n';
+      p += '\n';
+    }
+
+    // Symptôme
+    const symptome = v('symptome');
+    const frequence = v('frequence');
+    const depuis = v('depuis');
+    if (symptome) {
+      p += '**Symptôme :**\n' + symptome + '\n';
+      if (frequence || depuis) {
+        p += '- Fréquence : ' + (frequence || '—') + ' | Depuis : ' + (depuis || '—') + '\n';
+      }
+      p += '\n';
+    }
+
+    // Codes
+    const codes = v('codes');
+    if (codes) p += '**Codes erreur :**\n' + codes + '\n\n';
+
+    // Contexte
+    const contexte = v('contexte');
+    if (contexte) p += '**Contexte :**\n' + contexte + '\n\n';
+
+    // Déjà vérifié
+    const verifie = v('verifie');
+    if (verifie) p += '**Déjà vérifié :**\n' + verifie + '\n\n';
+
+    // Réseau
+    if (document.getElementById('var-reseau').classList.contains('visible')) {
+      const busType = v('busType');
+      const busVoyants = v('busVoyants');
+      const busTerm = v('busTerm');
+      const busNotes = v('busNotes');
+      if (busType || busVoyants || busNotes) {
+        p += '**Réseau bus :**\n';
+        if (busType) p += '- Type : ' + busType + '\n';
+        if (busVoyants) p += '- Voyants : ' + busVoyants + '\n';
+        if (busTerm) p += '- Terminaison : ' + busTerm + '\n';
+        if (busNotes) p += busNotes + '\n';
+        p += '\n';
+      }
+    }
+
+    // Intervention
+    if (document.getElementById('var-intervention').classList.contains('visible')) {
+      const intervention = v('intervention');
+      if (intervention) p += '**Dernière intervention :**\n' + intervention + '\n\n';
+    }
+
+    // Photos
+    if (document.getElementById('var-photos').classList.contains('visible')) {
+      const photos = v('photos');
+      if (photos) p += '**Photos jointes :**\n' + photos + '\n\n';
+    }
+
+    // Attente
+    const attente = v('attente');
+    if (attente) p += '**Ce que j\'attends :**\n' + attente + '\n';
+
+    return p;
+  }
+
+  // Copy
+  function copyPrompt() {
+    const text = buildPrompt();
+    navigator.clipboard.writeText(text).then(() => {
+      const fb = document.getElementById('copyFeedback');
+      fb.classList.add('show');
+      setTimeout(() => fb.classList.remove('show'), 2000);
+    }).catch(() => {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const fb = document.getElementById('copyFeedback');
+      fb.classList.add('show');
+      setTimeout(() => fb.classList.remove('show'), 2000);
+    });
+  }
+
+  // Local storage save/load
+  function getFormData() {
+    const ids = ['machine','section','axe','variateur','modeCtrl','symptome','frequence','depuis','codes','contexte','verifie','busType','busVoyants','busTerm','busNotes','intervention','photos','attente'];
+    const data = {};
+    ids.forEach(id => { data[id] = document.getElementById(id)?.value || ''; });
+    return data;
+  }
+
+  function saveLocal() {
+    try {
+      localStorage.setItem('diag-draft', JSON.stringify(getFormData()));
+      const fb = document.getElementById('copyFeedback');
+      fb.textContent = '✓ Brouillon sauvegardé';
+      fb.classList.add('show');
+      setTimeout(() => { fb.classList.remove('show'); fb.textContent = '✓ Prompt copié — colle dans Claude'; }, 2000);
+    } catch(e) { alert('Erreur sauvegarde : ' + e.message); }
+  }
+
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem('diag-draft');
+      if (!raw) { alert('Aucun brouillon trouvé.'); return; }
+      const data = JSON.parse(raw);
+      Object.keys(data).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = data[id];
+      });
+      const fb = document.getElementById('copyFeedback');
+      fb.textContent = '✓ Brouillon chargé';
+      fb.classList.add('show');
+      setTimeout(() => { fb.classList.remove('show'); fb.textContent = '✓ Prompt copié — colle dans Claude'; }, 2000);
+    } catch(e) { alert('Erreur chargement : ' + e.message); }
+  }
+
+  function clearAll() {
+    if (!confirm('Réinitialiser tous les champs ?')) return;
+    document.querySelectorAll('input, textarea').forEach(el => {
+      if (el.id === 'attente') {
+        el.value = '→ Top 3 causes probables classées par probabilité\n→ Points de mesure précis pour confirmer/éliminer\n→ État E/S et bits de diagnostic à vérifier\n→ Procédure de correction si cause confirmée';
+      } else {
+        el.value = '';
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
