@@ -1,112 +1,122 @@
 # CLAUDE.md
 
-Guidance for AI assistants (Claude Code and others) working in this repository.
+Consignes pour les assistants IA (Claude Code et autres) travaillant dans ce
+dépôt.
 
-## What this repository is
+## Ce qu'est ce dépôt
 
-`maintenance-tools` is a small toolkit for **industrial maintenance field
-diagnostics** (French: *diagnostic terrain, maintenance industrielle*). The
-intended users are field electromechanics/technicians who use Claude to
-troubleshoot machines — PLCs, variable-frequency drives (VFDs/*variateurs*),
-safety relays, and industrial fieldbus networks — on the shop floor.
+`maintenance-tools` est une petite boîte à outils pour le **diagnostic terrain
+en maintenance industrielle**. Les utilisateurs visés sont des
+électromécaniciens/techniciens de terrain qui utilisent Claude pour dépanner des
+machines — automates (PLC), variateurs de fréquence (*variateurs*/VFD), relais
+de sécurité et réseaux de terrain industriels (fieldbus) — directement à l'atelier.
 
-The domain is French-first: the machines referenced are woodworking lines
-(HOMAG, Holzma, Biesse, SCM), the drives are KEB / Lenze / IndraDrive, and all
-user-facing text is in **French (fr-CA)**. Preserve that language and vocabulary
-in any user-facing content you add or edit.
+Le domaine est **francophone (fr-CA)** : les machines référencées sont des lignes
+de travail du bois (HOMAG, Holzma, Biesse, SCM), les variateurs sont des
+KEB / Lenze / IndraDrive, et tout le texte destiné à l'utilisateur est en
+**français**. Conserve cette langue et ce vocabulaire dans tout contenu visible
+que tu ajoutes ou modifies.
 
-## Repository layout
+## Structure du dépôt
 
-The repository is intentionally tiny and flat — there is no build system, no
-dependencies, and no package manager.
+Le dépôt est volontairement minuscule et plat — pas de système de build, pas de
+dépendances, pas de gestionnaire de paquets.
 
 ```
 .
-├── README.md                  # One-line stub title only
-└── diagnostic-template.html   # The actual tool (self-contained, ~650 lines)
+├── README.md                  # Titre stub sur une seule ligne
+└── diagnostic-template.html   # L'outil réel (autonome, ~650 lignes)
 ```
 
 ### `diagnostic-template.html`
 
-A **single self-contained HTML page** — no external JS/CSS bundles, no build
-step. Open it directly in a browser (`file://`) and it works. It is a
-**structured prompt builder**: the technician fills in a form describing a
-machine fault, and the page assembles a well-formed Markdown diagnostic prompt
-to paste into Claude.
+Une **page HTML unique et autonome** — aucun bundle JS/CSS externe, aucune étape
+de build. On l'ouvre directement dans un navigateur (`file://`) et elle
+fonctionne. C'est un **constructeur de prompt structuré** : le technicien
+remplit un formulaire décrivant une panne machine, et la page assemble un prompt
+de diagnostic Markdown bien formé à coller dans Claude.
 
-Structure of the file (all inline):
-- **`<style>` block** — a dark "terminal/instrument" theme driven by CSS custom
-  properties in `:root` (`--bg`, `--surface`, `--accent: #f59e0b` amber, mono
-  font JetBrains Mono, sans IBM Plex Sans). Fonts load from Google Fonts via
-  `@import`.
-- **Form sections** — numbered `①`–`⑦`, each a `.section` card:
+Structure du fichier (tout est en inline) :
+- **Bloc `<style>`** — un thème sombre « terminal/instrument » piloté par des
+  variables CSS dans `:root` (`--bg`, `--surface`, `--accent: #f59e0b` ambre,
+  police mono JetBrains Mono, police sans IBM Plex Sans). Les polices sont
+  chargées depuis Google Fonts via `@import`.
+- **Sections du formulaire** — numérotées `①`–`⑦`, chacune une carte `.section` :
   1. Identification (machine, section, axe/organe, variateur/PLC, mode contrôle)
   2. Symptôme (+ fréquence, depuis quand)
   3. Codes erreur
   4. Contexte
-  5. Déjà vérifié (marked *critique* — the more filled, the less Claude re-asks)
-  6. Optional toggle sections: **Réseau bus**, **Après intervention**,
+  5. Déjà vérifié (marqué *critique* — plus c'est rempli, moins Claude redemande)
+  6. Sections optionnelles à bascule : **Réseau bus**, **Après intervention**,
      **Photos / Captures**
-  7. Ce que j'attends (default: top-3 ranked causes, measurement points, I/O &
-     diagnostic bits, correction procedure)
-- **`<script>` block** — plain vanilla JS, no framework. Key functions:
-  - `buildPrompt()` — reads every field by `id` and concatenates a Markdown
-    prompt string. **This is the heart of the tool.**
-  - `copyPrompt()` — copies the built prompt to the clipboard (with a
-    `document.execCommand('copy')` fallback for non-secure contexts).
-  - `saveLocal()` / `loadLocal()` — persist a draft to `localStorage` under the
-    key `diag-draft`.
-  - `clearAll()` / `toggleVariant()` — reset and show/hide optional sections.
+  7. Ce que j'attends (par défaut : top-3 causes classées, points de mesure,
+     E/S & bits de diagnostic, procédure de correction)
+- **Bloc `<script>`** — JS vanille pur, sans framework. Fonctions clés :
+  - `buildPrompt()` — lit chaque champ par son `id` et concatène une chaîne de
+    prompt Markdown. **C'est le cœur de l'outil.**
+  - `copyPrompt()` — copie le prompt assemblé dans le presse-papiers (avec un
+    repli `document.execCommand('copy')` pour les contextes non sécurisés).
+  - `saveLocal()` / `loadLocal()` — sauvegardent un brouillon dans
+    `localStorage` sous la clé `diag-draft`.
+  - `clearAll()` / `toggleVariant()` — réinitialisent et affichent/masquent les
+    sections optionnelles.
 
-A **LOTO safety banner** (🔒 *Consignation · Vérification absence d'énergie ·
-Cadenas personnel*) sits at the top of the page. This reflects a domain-wide
-safety convention: never remove or downplay lock-out/tag-out reminders.
+Une **bannière de sécurité LOTO** (🔒 *Consignation · Vérification absence
+d'énergie · Cadenas personnel*) se trouve en haut de la page. Elle reflète une
+convention de sécurité transversale au domaine : ne jamais retirer ni minimiser
+les rappels de consignation (lock-out/tag-out).
 
-## Key conventions
+## Conventions clés
 
-- **Zero build, zero dependencies.** Everything ships in one HTML file. Do not
-  introduce a bundler, framework, `package.json`, or npm dependency unless
-  explicitly asked — it would break the "open the file and it works" model.
-- **Keep it self-contained.** New behavior goes in the existing inline
-  `<style>` / `<script>` blocks. The only accepted external resource is Google
-  Fonts.
-- **Field ↔ builder contract.** Each form control has a stable `id`. If you add
-  a field, you must (a) give it an `id`, (b) read it in `buildPrompt()`, and
-  (c) add that `id` to the `getFormData()` array so save/load draft keeps
-  working. These three places must stay in sync.
-- **French, fr-CA.** All labels, placeholders, buttons, and generated prompt
-  text are French. Dates use `toLocaleDateString('fr-CA')`. Match this.
-- **Theme via CSS variables.** Reuse the `:root` custom properties for colors
-  rather than hard-coding hex values, so the instrument look stays consistent.
-- **Safety first.** Preserve the LOTO banner and any safety framing in
-  generated prompts.
+- **Zéro build, zéro dépendance.** Tout tient dans un seul fichier HTML.
+  N'introduis pas de bundler, de framework, de `package.json` ou de dépendance
+  npm sauf demande explicite — cela casserait le modèle « on ouvre le fichier et
+  ça marche ».
+- **Garder l'autonomie.** Tout nouveau comportement va dans les blocs inline
+  `<style>` / `<script>` existants. La seule ressource externe acceptée est
+  Google Fonts.
+- **Contrat champ ↔ constructeur.** Chaque contrôle du formulaire a un `id`
+  stable. Si tu ajoutes un champ, tu dois (a) lui donner un `id`, (b) le lire
+  dans `buildPrompt()`, et (c) ajouter cet `id` au tableau de `getFormData()`
+  pour que la sauvegarde/chargement du brouillon continue de fonctionner. Ces
+  trois endroits doivent rester synchronisés.
+- **Français, fr-CA.** Tous les libellés, placeholders, boutons et le texte de
+  prompt généré sont en français. Les dates utilisent
+  `toLocaleDateString('fr-CA')`. Respecte cela.
+- **Thème via variables CSS.** Réutilise les propriétés personnalisées de
+  `:root` pour les couleurs plutôt que de coder les valeurs hexadécimales en
+  dur, afin de garder un rendu instrument cohérent.
+- **La sécurité d'abord.** Préserve la bannière LOTO et tout cadre de sécurité
+  dans les prompts générés.
 
-## Development workflow
+## Flux de développement
 
-- **Run / preview:** open `diagnostic-template.html` in any browser. No server
-  needed. To verify JS changes, use the browser devtools console.
-- **Testing:** there is no automated test suite. Verify manually: fill fields →
-  *Copier le prompt* → confirm the assembled Markdown is well-formed; toggle the
-  optional sections; save then reload a draft to confirm `localStorage`
-  round-trips.
-- **No CI / linters** are configured. Keep the HTML valid and the JS
-  framework-free.
+- **Lancer / prévisualiser :** ouvrir `diagnostic-template.html` dans n'importe
+  quel navigateur. Aucun serveur requis. Pour vérifier les changements JS,
+  utiliser la console des outils de développement du navigateur.
+- **Tests :** il n'y a pas de suite de tests automatisée. Vérifier manuellement :
+  remplir les champs → *Copier le prompt* → confirmer que le Markdown assemblé
+  est bien formé ; basculer les sections optionnelles ; sauvegarder puis
+  recharger un brouillon pour confirmer l'aller-retour `localStorage`.
+- **Aucun CI / linter** n'est configuré. Garder le HTML valide et le JS sans
+  framework.
 
-## Git & branch conventions
+## Conventions Git & branches
 
-- Default branch: `main`.
-- Do work on a feature branch, commit with clear descriptive messages, and push
-  with `git push -u origin <branch>`.
-- Do **not** open a pull request unless explicitly asked.
+- Branche par défaut : `main`.
+- Travailler sur une branche de fonctionnalité, committer avec des messages
+  clairs et descriptifs, et pousser avec `git push -u origin <branche>`.
+- **Ne pas** ouvrir de pull request sauf demande explicite.
 
-## Related Claude skills
+## Skills Claude associés
 
-This environment ships domain skills that pair with this tool — e.g. field
-diagnostic skills for Allen-Bradley Guardmaster safety relays (MSR138DP,
-MSR210P, GSR 440R), fieldbus troubleshooting (Profinet/Profibus/Modbus/
-EtherNet-IP, EtherCAT/CANopen/IO-Link), CODESYS/TwinCAT Structured Text, KUKA
-KRL, HOMAG placage lines, and electrical schematic reading. The
-`diagnostic-template.html` prompt structure (identification → symptôme → codes →
-contexte → déjà vérifié → attente) mirrors what those skills expect as input.
-When helping a user with a field fault, prefer invoking the relevant skill and
-gather the same fields this template collects.
+Cet environnement fournit des skills de domaine qui s'accordent avec cet outil —
+p. ex. des skills de diagnostic terrain pour les relais de sécurité
+Allen-Bradley Guardmaster (MSR138DP, MSR210P, GSR 440R), le dépannage fieldbus
+(Profinet/Profibus/Modbus/EtherNet-IP, EtherCAT/CANopen/IO-Link), le Texte
+Structuré CODESYS/TwinCAT, le KRL KUKA, les lignes de placage HOMAG et la lecture
+de schémas électriques. La structure de prompt de `diagnostic-template.html`
+(identification → symptôme → codes → contexte → déjà vérifié → attente) reflète
+ce que ces skills attendent en entrée. Pour aider un utilisateur sur une panne
+terrain, préfère invoquer le skill pertinent et recueillir les mêmes champs que
+ce template collecte.
