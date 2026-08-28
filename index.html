@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1114">
+<meta name="description" content="Générateur de prompts de diagnostic terrain pour électromécanicien — maintenance industrielle.">
+<title>Atelier Diagnostic — Générateur de prompts terrain</title>
+<style>
+  :root {
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --r: 6px;
+  }
+
+  /* ── Thème sombre (défaut atelier) ───────────────────────── */
+  html[data-theme="dark"] {
+    --bg: #0f1114;
+    --surface: #171a1f;
+    --surface-2: #21252c;
+    --surface-3: #2b303a;
+    --border: #2e333d;
+    --text: #e7e9ee;
+    --text-dim: #9aa0b0;
+    --text-faint: #6b7280;
+    --accent: #f59e0b;
+    --accent-soft: rgba(245,158,11,.12);
+    --red: #ef4444;
+    --red-soft: rgba(239,68,68,.12);
+    --green: #22c55e;
+    --green-soft: rgba(34,197,94,.12);
+    --blue: #60a5fa;
+    --shadow: 0 8px 30px rgba(0,0,0,.55);
+  }
+  /* ── Thème clair (plein jour / halle éclairée) ────────────── */
+  html[data-theme="light"] {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface-2: #eceef2;
+    --surface-3: #dfe3ea;
+    --border: #cbd0d9;
+    --text: #14171c;
+    --text-dim: #555d6d;
+    --text-faint: #7c8496;
+    --accent: #b45309;
+    --accent-soft: rgba(180,83,9,.10);
+    --red: #b91c1c;
+    --red-soft: rgba(185,28,28,.09);
+    --green: #15803d;
+    --green-soft: rgba(21,128,61,.10);
+    --blue: #1d4ed8;
+    --shadow: 0 8px 30px rgba(0,0,0,.15);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    padding-bottom: 96px;
+  }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 14px; }
+
+  /* ── Barre supérieure ────────────────────────────────────── */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-in {
+    max-width: 860px; margin: 0 auto; padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .brand { display:flex; align-items:center; gap:9px; min-width:0; flex:1; }
+  .brand .mark {
+    width: 30px; height: 30px; flex-shrink:0;
+    display:grid; place-items:center;
+    background: var(--accent); color: #0f1114;
+    border-radius: var(--r); font-size: 17px; font-weight: 700;
+  }
+  html[data-theme="light"] .brand .mark { color: #fff; }
+  .brand .t { min-width:0; }
+  .brand h1 {
+    font-size: 15px; font-weight: 700; letter-spacing: .3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .brand .sub {
+    font-family: var(--mono); font-size: 10.5px; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: .8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .icon-btn {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim);
+    width: 34px; height: 34px; border-radius: var(--r); cursor: pointer;
+    display:grid; place-items:center; font-size: 15px; flex-shrink:0;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  /* ── Bandeau sécurité ────────────────────────────────────── */
+  .loto {
+    display:flex; gap:11px; align-items:flex-start;
+    background: var(--red-soft); border: 1px solid color-mix(in srgb, var(--red) 45%, transparent);
+    border-radius: var(--r); padding: 11px 13px; margin: 14px 0 18px;
+  }
+  .loto .ic { font-size: 19px; line-height: 1.2; flex-shrink:0; }
+  .loto .tx { font-size: 12.5px; color: var(--text); line-height: 1.5; }
+  .loto .tx b { color: var(--red); letter-spacing:.4px; }
+
+  /* ── Sections ────────────────────────────────────────────── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); margin-bottom: 13px; overflow: hidden;
+  }
+  .card > .head {
+    display:flex; align-items:center; gap:10px;
+    padding: 11px 13px; background: var(--surface-2);
+    border-bottom: 1px solid var(--border); cursor: pointer; user-select:none;
+  }
+  .card > .head .n {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    background: var(--surface-3); color: var(--text-dim);
+    width: 22px; height: 22px; border-radius: 4px; display:grid; place-items:center; flex-shrink:0;
+  }
+  .card.filled > .head .n { background: var(--accent); color: var(--bg); }
+  html[data-theme="light"] .card.filled > .head .n { color: #fff; }
+  .card > .head h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: .5px;
+    text-transform: uppercase; flex: 1; color: var(--text);
+  }
+  .card > .head .meta { font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); }
+  .card > .head .chev { color: var(--text-faint); font-size: 12px; transition: transform .18s; }
+  .card.collapsed > .head .chev { transform: rotate(-90deg); }
+  .card > .body { padding: 13px; }
+  .card.collapsed > .body { display: none; }
+
+  /* ── Champs ──────────────────────────────────────────────── */
+  label.lb {
+    display:block; font-family: var(--mono); font-size: 10.5px;
+    color: var(--text-dim); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 5px;
+  }
+  input[type=text], textarea, select {
+    width: 100%; background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 5px;
+    font-family: var(--mono); font-size: 13.5px; padding: 9px 11px;
+    line-height: 1.55; transition: border-color .15s;
+  }
+  html[data-theme="light"] input[type=text], html[data-theme="light"] textarea, html[data-theme="light"] select { background: var(--surface); }
+  textarea { resize: vertical; min-height: 62px; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+  ::placeholder { color: var(--text-faint); opacity: .8; }
+  .grid { display:grid; gap: 11px; grid-template-columns: 1fr 1fr; }
+  .grid.g3 { grid-template-columns: 1fr 1fr 1fr; }
+  .grid.g1 { grid-template-columns: 1fr; }
+  .mt { margin-top: 11px; }
+  .hint { font-size: 11.5px; color: var(--text-faint); margin-top: 6px; line-height:1.45; }
+
+  /* ── Chips (mode / domaine) ──────────────────────────────── */
+  .chips { display:flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing:.3px;
+    padding: 7px 11px; border-radius: 20px; cursor: pointer;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim);
+    display:flex; align-items:center; gap:6px; transition: all .13s;
+  }
+  .chip:hover { color: var(--text); border-color: var(--text-faint); }
+  .chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .chip .em { font-family: var(--sans); font-size: 13px; }
+
+  .tiles { display:grid; grid-template-columns: repeat(auto-fill, minmax(158px,1fr)); gap: 8px; }
+  .tile {
+    text-align:left; cursor:pointer; padding: 10px 11px; border-radius: var(--r);
+    background: var(--surface-2); border: 1px solid var(--border); transition: all .13s;
+  }
+  .tile:hover { border-color: var(--text-faint); }
+  .tile.on { background: var(--accent-soft); border-color: var(--accent); }
+  .tile .tl { font-size: 13px; font-weight: 600; color: var(--text); display:flex; align-items:center; gap:7px; }
+  .tile.on .tl { color: var(--accent); }
+  .tile .td { font-size: 11px; color: var(--text-faint); margin-top: 3px; line-height:1.4; }
+
+  /* ── Checklist terrain ───────────────────────────────────── */
+  .checks { display:flex; flex-direction:column; gap: 6px; }
+  .ck { border: 1px solid var(--border); border-radius: 5px; background: var(--bg); overflow:hidden; }
+  html[data-theme="light"] .ck { background: var(--surface); }
+  .ck.on { border-color: var(--green); background: var(--green-soft); }
+  .ck-row { display:flex; align-items:center; gap:9px; padding: 8px 10px; cursor:pointer; }
+  .ck-box {
+    width:17px; height:17px; border-radius:4px; flex-shrink:0;
+    border:1.5px solid var(--text-faint); display:grid; place-items:center;
+    font-size:11px; color: transparent; font-weight:700;
+  }
+  .ck.on .ck-box { background: var(--green); border-color: var(--green); color: #fff; }
+  .ck-lb { font-size: 13px; color: var(--text-dim); line-height:1.35; }
+  .ck.on .ck-lb { color: var(--text); }
+  .ck-val { display:none; padding: 0 10px 9px 36px; }
+  .ck.on .ck-val { display:block; }
+  .ck-val input { font-size: 12.5px; padding: 6px 9px; }
+
+  /* ── Score ───────────────────────────────────────────────── */
+  .scorebox { display:flex; align-items:center; gap: 13px; }
+  .ring { --p: 0; width: 52px; height: 52px; flex-shrink:0; position: relative; }
+  .ring svg { transform: rotate(-90deg); display:block; }
+  .ring .tr { stroke: var(--surface-3); }
+  .ring .fg { stroke: var(--accent); transition: stroke-dashoffset .4s ease, stroke .3s; }
+  .ring .lbl {
+    position:absolute; inset:0; display:grid; place-items:center;
+    font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--text);
+  }
+  .score-txt .st { font-size: 13px; font-weight: 600; }
+  .score-txt .sd { font-size: 11.5px; color: var(--text-faint); }
+  .gaps { display:flex; flex-wrap:wrap; gap:6px; margin-top: 11px; }
+  .gap {
+    font-family: var(--mono); font-size: 11px; padding: 5px 9px; border-radius: 4px;
+    background: var(--red-soft); border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
+    color: var(--red); cursor: pointer;
+  }
+  .gap.ok { background: var(--green-soft); border-color: color-mix(in srgb, var(--green) 35%, transparent); color: var(--green); cursor: default; }
+
+  /* ── Barre d'action basse ────────────────────────────────── */
+  .dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(10px); border-top: 1px solid var(--border);
+    padding: 9px 14px calc(9px + env(safe-area-inset-bottom));
+  }
+  .dock-in { max-width: 860px; margin:0 auto; display:flex; align-items:center; gap: 10px; }
+  .bar { flex:1; min-width:0; }
+  .bar .lb2 { display:flex; justify-content:space-between; font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); margin-bottom:4px; }
+  .bar .track { height: 5px; background: var(--surface-3); border-radius: 3px; overflow:hidden; }
+  .bar .fill { height:100%; width:0; background: var(--accent); border-radius:3px; transition: width .35s ease, background .3s; }
+
+  .btn {
+    font-family: var(--sans); font-size: 13.5px; font-weight: 600;
+    padding: 10px 16px; border-radius: var(--r); border: 1px solid transparent;
+    cursor: pointer; white-space: nowrap; transition: all .13s;
+  }
+  .btn-p { background: var(--accent); color: #0f1114; }
+  html[data-theme="light"] .btn-p { color: #fff; }
+  .btn-p:hover { filter: brightness(1.08); }
+  .btn-s { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+  .btn-s:hover { border-color: var(--accent); }
+  .btn-d { background: transparent; color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, transparent); }
+  .btn-sm { font-size: 12px; padding: 7px 12px; }
+  .row-btn { display:flex; flex-wrap:wrap; gap: 8px; }
+
+  /* ── Aperçu plein écran ──────────────────────────────────── */
+  .sheet {
+    position: fixed; inset: 0; z-index: 60; background: var(--bg);
+    display: none; flex-direction: column;
+  }
+  .sheet.open { display: flex; }
+  .sheet-head {
+    display:flex; align-items:center; gap:10px; padding: 11px 14px;
+    border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  .sheet-head h3 { font-size: 14px; font-weight: 700; flex:1; }
+  .sheet-body { flex:1; overflow-y: auto; padding: 14px; }
+  .sheet-body pre {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.62;
+    white-space: pre-wrap; word-break: break-word; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 14px; max-width: 860px; margin: 0 auto;
+  }
+  .sheet-foot {
+    display:flex; gap: 9px; padding: 11px 14px calc(11px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border); background: var(--surface);
+  }
+  .sheet-foot .btn { flex: 1; }
+
+  /* ── Toast ───────────────────────────────────────────────── */
+  .toast {
+    position: fixed; left: 50%; bottom: 88px; transform: translate(-50%, 12px);
+    background: var(--green); color: #fff; font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+    padding: 9px 17px; border-radius: 20px; z-index: 80; opacity: 0; pointer-events: none;
+    transition: all .25s; box-shadow: var(--shadow); max-width: 90vw; text-align:center;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  .foot { text-align:center; font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); padding: 18px 0 4px; line-height:1.6; }
+
+  @media (max-width: 560px) {
+    .grid, .grid.g3 { grid-template-columns: 1fr; }
+    .tiles { grid-template-columns: 1fr 1fr; }
+    body { font-size: 14.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <div class="mark">⚙</div>
+      <div class="t">
+        <h1>Atelier Diagnostic</h1>
+        <div class="sub">Générateur de prompts terrain</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="btnTheme" title="Thème clair / sombre" aria-label="Changer de thème"></button>
+    <button class="icon-btn" id="btnMenu" title="Brouillons et historique">☰</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="loto">
+    <div class="ic">🔒</div>
+    <div class="tx">
+      <b>CONSIGNATION</b> — Avant toute intervention sur puissance, bus DC variateur (condensateurs),
+      pneumatique ou hydraulique : séparation · condamnation · vérification d'absence de tension · cadenas personnel.
+      Cette appli prépare une demande d'analyse, elle ne remplace ni le schéma ni la procédure du constructeur.
+    </div>
+  </div>
+
+  <!-- 1 · OBJECTIF ------------------------------------------------------->
+  <div class="card" id="c-mode">
+    <div class="head" data-toggle><div class="n">1</div><h2>Objectif de la demande</h2><span class="meta" id="metaMode"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <div class="tiles" id="modeTiles"></div>
+    </div>
+  </div>
+
+  <!-- 2 · DOMAINE -------------------------------------------------------->
+  <div class="card" id="c-dom">
+    <div class="head" data-toggle><div class="n">2</div><h2>Domaine technique</h2><span class="meta" id="metaDom"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <div class="chips" id="domChips"></div>
+      <div class="hint" id="domHint">Le domaine choisi adapte les champs, la checklist de mesures et le rôle donné à l'assistant.</div>
+    </div>
+  </div>
+
+  <!-- 3 · ÉQUIPEMENT ----------------------------------------------------->
+  <div class="card" id="c-equip">
+    <div class="head" data-toggle><div class="n">3</div><h2>Équipement</h2><span class="meta" id="metaEquip"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <div class="grid g3">
+        <div><label class="lb">Machine</label><input type="text" id="machine" list="dl-machines" placeholder="HOMAG TBH501"></div>
+        <div><label class="lb">Section / Folio</label><input type="text" id="section" placeholder="451 · folio 12"></div>
+        <div><label class="lb">Axe / Organe</label><input type="text" id="organe" placeholder="N30R — avance droit"></div>
+      </div>
+      <div class="grid mt">
+        <div><label class="lb">Composant en cause</label><input type="text" id="composant" placeholder="Variateur KEB F5 · CPU 1214C · relais 440R-S13R2"></div>
+        <div><label class="lb">Repère / n° de série</label><input type="text" id="repere" placeholder="-T451 · A2.3 · SN 1234567"></div>
+      </div>
+      <datalist id="dl-machines"></datalist>
+      <div class="hint">Le repère exact (borne, folio, adresse) est ce qui transforme une réponse générique en réponse exploitable.</div>
+    </div>
+  </div>
+
+  <!-- 4 · SYMPTÔME ------------------------------------------------------->
+  <div class="card" id="c-symp">
+    <div class="head" data-toggle><div class="n">4</div><h2>Symptôme observé</h2><span class="meta" id="metaSymp"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <textarea id="symptome" rows="3" placeholder="Décris ce que TU constates, pas ton interprétation : comportement machine, bruit, moment exact, message HMI, voyants."></textarea>
+      <div class="grid g3 mt">
+        <div><label class="lb">Fréquence</label><input type="text" id="frequence" list="dl-freq" placeholder="Intermittent, 3×/jour"></div>
+        <div><label class="lb">Apparu depuis</label><input type="text" id="depuis" placeholder="Lundi, après changement de programme"></div>
+        <div><label class="lb">Reproductible ?</label><input type="text" id="repro" list="dl-repro" placeholder="Oui, en manuel à vitesse max"></div>
+      </div>
+      <div class="grid mt">
+        <div><label class="lb">État machine</label>
+          <select id="etat">
+            <option value="">—</option>
+            <option>Arrêtée — production bloquée</option>
+            <option>En marche — mode dégradé</option>
+            <option>En marche — défaut intermittent</option>
+            <option>Arrêt planifié / maintenance préventive</option>
+            <option>Mise en service / rétrofit</option>
+          </select>
+        </div>
+        <div><label class="lb">Urgence</label>
+          <select id="urgence">
+            <option value="">—</option>
+            <option>Critique — arrêt de ligne, chaque minute compte</option>
+            <option>Haute — reprise attendue dans l'heure</option>
+            <option>Normale — à traiter dans la journée</option>
+            <option>Basse — analyse de fond, pas d'arrêt</option>
+          </select>
+        </div>
+      </div>
+      <datalist id="dl-freq"><option>Permanent</option><option>Intermittent</option><option>Au démarrage à froid</option><option>En charge uniquement</option><option>Après X cycles</option><option>Aléatoire</option></datalist>
+      <datalist id="dl-repro"><option>Oui, à volonté</option><option>Parfois</option><option>Non, jamais devant moi</option></datalist>
+    </div>
+  </div>
+
+  <!-- 5 · CODES ---------------------------------------------------------->
+  <div class="card" id="c-codes">
+    <div class="head" data-toggle><div class="n">5</div><h2>Codes, messages, voyants</h2><span class="meta" id="metaCodes"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <textarea id="codes" rows="3" placeholder="E.OC surintensité (3× dans le journal variateur)&#10;HMI : « Axe N30R non en position »&#10;LED BF1 rouge clignotante 2 Hz sur CPU"></textarea>
+      <div class="hint">Recopie les codes <b>à la lettre</b> et l'ordre d'apparition : le premier défaut est souvent la cause, les suivants la conséquence.</div>
+    </div>
+  </div>
+
+  <!-- 6 · SPÉCIFIQUE DOMAINE --------------------------------------------->
+  <div class="card" id="c-spec">
+    <div class="head" data-toggle><div class="n">6</div><h2 id="specTitle">Détails techniques</h2><span class="meta" id="metaSpec"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <div id="specFields" class="grid g1"></div>
+      <div class="hint" id="specEmpty">Choisis un domaine technique à l'étape 2 pour afficher les champs spécifiques.</div>
+    </div>
+  </div>
+
+  <!-- 7 · RELEVÉS -------------------------------------------------------->
+  <div class="card" id="c-mes">
+    <div class="head" data-toggle><div class="n">7</div><h2>Relevés &amp; vérifications</h2><span class="meta" id="metaMes"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <label class="lb">Checklist du domaine — coche ce qui est fait, note la valeur</label>
+      <div class="checks" id="checkList"></div>
+      <div class="hint" id="checkEmpty">La checklist s'affiche après le choix du domaine.</div>
+      <div class="mt">
+        <label class="lb">Autres mesures / observations</label>
+        <textarea id="mesures" rows="4" placeholder="- Tension bus DC : 540 V au repos, chute à 480 V à l'accélération&#10;- Courant phase U : 12,4 A (nominal 9,2 A)&#10;- Entrée PLC I2.3 : TRUE quand vérin sorti"></textarea>
+      </div>
+      <div class="mt">
+        <label class="lb">Pistes déjà écartées (ne pas reproposer)</label>
+        <textarea id="ecarte" rows="2" placeholder="- Câble moteur remplacé hier, défaut identique&#10;- Codeur testé sur un autre axe : OK"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8 · CONTRAINTES ---------------------------------------------------->
+  <div class="card collapsed" id="c-contr">
+    <div class="head" data-toggle><div class="n">8</div><h2>Contraintes terrain</h2><span class="meta" id="metaContr"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <label class="lb">Outillage disponible maintenant</label>
+      <div class="chips" id="toolChips"></div>
+      <div class="grid mt">
+        <div><label class="lb">Pièces disponibles</label><input type="text" id="pieces" placeholder="1 variateur identique en stock, fusibles, contacteur"></div>
+        <div><label class="lb">Temps / accès</label><input type="text" id="tempsAcces" placeholder="45 min avant reprise · armoire A2 accessible"></div>
+      </div>
+      <div class="mt">
+        <div><label class="lb">Documentation en main</label><input type="text" id="docs" placeholder="Schéma électrique folio 10-14, manuel KEB, sauvegarde PLC"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9 · RÉGLAGES DE RÉPONSE -------------------------------------------->
+  <div class="card collapsed" id="c-out">
+    <div class="head" data-toggle><div class="n">9</div><h2>Format de réponse</h2><span class="meta" id="metaOut"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <div class="grid">
+        <div><label class="lb">Profondeur</label>
+          <select id="profondeur">
+            <option value="court">Court — droit au but, terrain</option>
+            <option value="standard" selected>Standard — équilibré</option>
+            <option value="detaille">Détaillé — avec le pourquoi technique</option>
+          </select>
+        </div>
+        <div><label class="lb">Nombre d'hypothèses</label>
+          <select id="nbCauses">
+            <option value="3" selected>Top 3 causes</option>
+            <option value="5">Top 5 causes</option>
+            <option value="tout">Toutes les causes plausibles</option>
+          </select>
+        </div>
+      </div>
+      <div class="chips mt" id="optChips"></div>
+      <div class="mt">
+        <label class="lb">Demande libre supplémentaire</label>
+        <textarea id="libre" rows="2" placeholder="Ex : compare avec le comportement de l'axe jumeau N30L qui fonctionne."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCORE -------------------------------------------------------------->
+  <div class="card" id="c-score">
+    <div class="head" data-toggle><div class="n">✓</div><h2>Qualité du prompt</h2><span class="meta" id="metaScore"></span><span class="chev">▾</span></div>
+    <div class="body">
+      <div class="scorebox">
+        <div class="ring" id="ring">
+          <svg width="52" height="52" viewBox="0 0 52 52">
+            <circle class="tr" cx="26" cy="26" r="22" fill="none" stroke-width="5"></circle>
+            <circle class="fg" id="ringFg" cx="26" cy="26" r="22" fill="none" stroke-width="5" stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2"></circle>
+          </svg>
+          <div class="lbl" id="ringLbl">0</div>
+        </div>
+        <div class="score-txt">
+          <div class="st" id="scoreTitle">Prompt vide</div>
+          <div class="sd" id="scoreDesc">Remplis les sections pour améliorer la précision de la réponse.</div>
+        </div>
+      </div>
+      <div class="gaps" id="gaps"></div>
+    </div>
+  </div>
+
+  <div class="row-btn" style="margin-bottom:16px">
+    <button class="btn btn-s btn-sm" id="btnSave">💾 Sauvegarder</button>
+    <button class="btn btn-s btn-sm" id="btnLoad">📂 Charger</button>
+    <button class="btn btn-s btn-sm" id="btnDemo">🧪 Exemple rempli</button>
+    <button class="btn btn-d btn-sm" id="btnReset">✕ Réinitialiser</button>
+  </div>
+
+  <div class="foot">
+    Fonctionne hors-ligne · Données stockées uniquement sur cet appareil<br>
+    Le diagnostic final reste sous la responsabilité de l'intervenant.
+  </div>
+
+</div>
+
+<div class="dock">
+  <div class="dock-in">
+    <div class="bar">
+      <div class="lb2"><span id="dockLbl">Qualité du prompt</span><span id="dockPct">0 %</span></div>
+      <div class="track"><div class="fill" id="dockFill"></div></div>
+    </div>
+    <button class="btn btn-s" id="btnPreview">Aperçu</button>
+    <button class="btn btn-p" id="btnCopy">Copier</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-head">
+    <h3>Prompt généré</h3>
+    <span class="meta" id="sheetMeta" style="font-family:var(--mono);font-size:11px;color:var(--text-faint)"></span>
+    <button class="icon-btn" id="btnCloseSheet">✕</button>
+  </div>
+  <div class="sheet-body"><pre id="preview"></pre></div>
+  <div class="sheet-foot">
+    <button class="btn btn-s" id="btnShare">Partager</button>
+    <button class="btn btn-p" id="btnCopy2">Copier le prompt</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   ATELIER DIAGNOSTIC — moteur de génération de prompts terrain
+   Application autonome : aucune dépendance réseau, aucun envoi de données.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. OBJECTIFS : ce que la réponse doit produire ──────────────── */
+const MODES = [
+  {
+    id: 'diag_rapide', icon: '⚡', label: 'Diagnostic rapide',
+    desc: 'Machine à l\'arrêt, il faut trouver et redémarrer',
+    posture: 'Je suis devant la machine, outils en main. Va droit au but : je dois pouvoir agir dans les 10 prochaines minutes.',
+    expects: [
+      'Les {N} causes les plus probables, classées, avec un pourcentage de confiance et UNE ligne de justification appuyée sur mes relevés.',
+      'Pour chaque cause : LE test qui la confirme ou l\'élimine — point de mesure exact (borne, repère, adresse), appareil, valeur attendue, verdict si OK et si KO.',
+      'L\'ordre d\'exécution des tests : le plus rapide et le plus discriminant en premier, numéroté.',
+      'La procédure de correction de la cause n°1 : étapes, valeurs, paramètres, couples.',
+      'Ce qui reste incertain et les 2 informations qui feraient basculer ton classement.'
+    ]
+  },
+  {
+    id: 'diag_fond', icon: '🔬', label: 'Panne intermittente',
+    desc: 'Défaut récurrent ou aléatoire à cerner',
+    posture: 'Le défaut est fuyant : il ne se produit pas à la demande. J\'ai besoin d\'une méthode pour le piéger, pas d\'un remplacement au hasard.',
+    expects: [
+      'Une analyse causale : quels mécanismes physiques produisent CE symptôme dans CES conditions, et pourquoi de manière intermittente.',
+      'Les corrélations à rechercher (température, charge, humidité, cycle, heure, vibration, réseau, autre équipement démarrant).',
+      'Un plan de surveillance : quoi enregistrer, avec quoi (trace variateur, scope, datalog PLC, caméra thermique), quels seuils déclenchent.',
+      'Les {N} causes racines candidates, classées, avec le test qui les distingue.',
+      'Une parade provisoire pour tenir la production, ET la correction définitive.',
+      'Comment prouver que la panne est réellement corrigée (critère et durée d\'observation).'
+    ]
+  },
+  {
+    id: 'schema', icon: '📐', label: 'Lecture de schéma',
+    desc: 'Tracer un circuit, comprendre une logique câblée',
+    posture: 'J\'ai le schéma sous les yeux (je peux joindre des photos des folios). Aide-moi à tracer et à comprendre avant de démonter.',
+    expects: [
+      'La liste des repères impliqués (bobines, contacts, protections, borniers) et leur rôle dans la fonction.',
+      'Le chemin complet du courant / de la logique, du départ protection jusqu\'à l\'organe, en citant chaque repère et chaque renvoi de folio.',
+      'L\'équation logique de la commande : à quelles conditions exactes l\'organe est alimenté.',
+      'Les points de mesure ordonnés le long de la chaîne, avec la valeur attendue à chaque point et ce que conclut chaque écart (méthode de dichotomie).',
+      'Les pièges classiques de ce type de circuit (contact NF ouvert au repos, auto-maintien, renvoi non vu, alimentation séparée, commun flottant).'
+    ]
+  },
+  {
+    id: 'code', icon: '⌨', label: 'Code automate / robot',
+    desc: 'Analyser, corriger ou écrire du programme',
+    posture: 'Je travaille sur le programme. Donne-moi du code exploitable tel quel et l\'explication de ce qu\'il fait.',
+    expects: [
+      'L\'analyse de la logique concernée : conditions, transitions, verrouillages, temporisations.',
+      'Le code proposé, complet et commenté en français, dans le langage et les conventions de nommage de l\'installation.',
+      'La déclaration des variables (type, adresse, rémanence) et l\'endroit exact où insérer le bloc.',
+      'Les sécurités à conserver ou ajouter : conditions de sécurité, comportement en défaut, reprise après coupure, position de repli.',
+      'Le test à faire pour valider, pas à pas, sans risquer la machine ni la matière.'
+    ]
+  },
+  {
+    id: 'procedure', icon: '📋', label: 'Procédure d\'intervention',
+    desc: 'Une gamme claire à suivre ou à transmettre',
+    posture: 'Je veux une procédure exécutable par un intervenant, y compris sur un poste de nuit.',
+    expects: [
+      'Les prérequis : consignation (LOTO), EPI, énergies à isoler (électrique, pneumatique, hydraulique, gravité, accumulateurs), outillage, pièces.',
+      'La procédure numérotée pas à pas, une action par ligne, avec les valeurs, couples et repères.',
+      'Les points d\'arrêt et de contrôle : quoi vérifier avant de passer à l\'étape suivante.',
+      'La remise en service : ordre de renvoi des énergies, essais à vide, essais en charge, critères d\'acceptation.',
+      'Le temps estimé et les pièges connus de cette opération.'
+    ]
+  },
+  {
+    id: 'rapport', icon: '📝', label: 'Rapport d\'intervention',
+    desc: 'Mettre au propre pour la GMAO',
+    posture: 'L\'intervention est faite. Rédige le compte-rendu, prêt à coller dans la GMAO.',
+    expects: [
+      'Un rapport structuré : constat · analyse · cause retenue · actions réalisées · pièces consommées · temps · état à la restitution.',
+      'Une formulation factuelle et professionnelle, sans jargon inutile, compréhensible par la production comme par un collègue.',
+      'La distinction claire entre la réparation faite et ce qui reste à faire (provisoire, à surveiller, à commander).',
+      'Les recommandations : préventif à ajouter, pièce à mettre en stock, modification à envisager.',
+      'Un titre court et des mots-clés pour retrouver l\'intervention plus tard.'
+    ]
+  },
+  {
+    id: 'piece', icon: '🔩', label: 'Pièce de rechange',
+    desc: 'Identifier, remplacer, trouver un équivalent',
+    posture: 'Je dois identifier ou remplacer un composant, si possible avec ce que j\'ai sous la main.',
+    expects: [
+      'L\'identification du composant à partir des éléments fournis : fonction, caractéristiques déterminantes, références probables.',
+      'Les critères de compatibilité qui ne se négocient pas (tension, courant, calibre, temporisation, catégorie de sécurité, protocole, encombrement, sens de rotation).',
+      'Les équivalences possibles et ce qu\'elles impliquent (adaptation de câblage, paramétrage, perte de fonction).',
+      'Ce qu\'il faut vérifier ou paramétrer AVANT et APRÈS montage.',
+      'Si l\'identification est incertaine : quelles photos, plaques ou mesures relever pour trancher.'
+    ]
+  },
+  {
+    id: 'formation', icon: '🎓', label: 'Comprendre le principe',
+    desc: 'Monter en compétence sur la technologie',
+    posture: 'Je veux comprendre le fonctionnement en profondeur, pas seulement réparer ce coup-ci.',
+    expects: [
+      'Le principe de fonctionnement expliqué du physique vers le fonctionnel, sans survol.',
+      'Un schéma en texte / ASCII de la chaîne fonctionnelle avec les grandeurs à chaque étage.',
+      'Les modes de défaillance typiques : ce qui casse, pourquoi, quel symptôme cela produit.',
+      'Les points de mesure clés et les valeurs de référence à connaître par cœur.',
+      'Les 5 réflexes de diagnostic à retenir pour cette technologie.'
+    ]
+  }
+];
+
+/* ── 2. DOMAINES : champs, checklists, expertise, compétences ────── */
+const DOMAINS = [
+  {
+    id: 'variateur', icon: '⚡', label: 'Variateur / Servo',
+    expert: 'variateurs de fréquence, servo-entraînements et motorisation industrielle (KEB, Lenze, SEW, Yaskawa, Schneider Lexium, Rexroth IndraDrive, Bonfiglioli, Baumüller)',
+    fields: [
+      { id:'v_modele', lb:'Variateur — marque, modèle, firmware', ph:'KEB F5 Multi 10 kVA, fw 2.3' },
+      { id:'v_moteur', lb:'Moteur', ph:'Asynchrone 5,5 kW 400 V · servo brushless avec frein · retour résolveur' },
+      { id:'v_ctrl',   lb:'Mode de contrôle', ph:'U/f · vectoriel sans capteur · vectoriel avec retour · couple · position' },
+      { id:'v_param',  lb:'Paramètres significatifs', ph:'Rampe accél. 0,5 s · limite courant 150 % · fréq. découpage 8 kHz' }
+    ],
+    checks: [
+      { l:'Tension réseau L1/L2/L3 en charge', ph:'400 V ±2 % équilibré' },
+      { l:'Tension bus DC (repos / accélération)', ph:'540 V / 480 V' },
+      { l:'Courant par phase moteur (pince)', ph:'U 12,4 A · V 12,1 A · W 8,7 A' },
+      { l:'Isolement moteur 500 V phase/terre', ph:'> 50 MΩ' },
+      { l:'Résistance entre phases moteur', ph:'1,2 Ω équilibré' },
+      { l:'Circuit STO / sécurité alimenté', ph:'24 V présents sur STO A et B' },
+      { l:'Serrage bornes puissance vérifié', ph:'OK au tournevis dynamo.' },
+      { l:'Refroidissement : ventilateur, filtres, T° armoire', ph:'Filtre encrassé, 42 °C' },
+      { l:'Historique des défauts du variateur relu', ph:'3× E.OC en 2 jours' },
+      { l:'Mécanique en aval libre (à la main, hors tension)', ph:'Rotation libre, pas de point dur' }
+    ]
+  },
+  {
+    id: 'automate', icon: '🖥', label: 'Automate / PLC',
+    expert: 'automates programmables et diagnostic logiciel (Siemens TIA Portal et STEP 7, CODESYS, Beckhoff TwinCAT 3, Allen-Bradley Studio 5000)',
+    fields: [
+      { id:'a_cpu',  lb:'CPU / plateforme', ph:'S7-1500 CPU 1516-3 PN/DP · CX5140 TwinCAT 3 · CompactLogix' },
+      { id:'a_led',  lb:'État des LED CPU / modules', ph:'RUN vert, SF rouge fixe, BF1 clignotante' },
+      { id:'a_diag', lb:'Tampon de diagnostic / journal', ph:'« Défaut module ET200SP slot 4 », horodaté 07:12' },
+      { id:'a_bloc', lb:'Bloc / programme concerné', ph:'FB_ConvoyeurA, réseau 12 · POU Main, étape 40' },
+      { id:'a_io',   lb:'E/S et bits observés en ligne', ph:'I2.3 = TRUE, Q4.1 = FALSE, MW20 = 1250' }
+    ],
+    checks: [
+      { l:'Tension 24 V automate mesurée en charge', ph:'23,8 V' },
+      { l:'LED de tous les modules relevées', ph:'Voir détail' },
+      { l:'Tampon de diagnostic lu et horodaté', ph:'Premier défaut à 07:12' },
+      { l:'Programme en ligne comparé au projet de référence', ph:'Identique / écart trouvé' },
+      { l:'Table de visualisation créée sur les variables clés', ph:'Oui' },
+      { l:'Aucun forçage permanent actif (LED FRCE)', ph:'Vérifié, aucun' },
+      { l:'Temps de cycle contrôlé', ph:'12 ms max, watchdog 150 ms' },
+      { l:'Références croisées de la variable suspecte relues', ph:'Écrite dans 2 blocs !' },
+      { l:'Sauvegarde du projet faite AVANT toute modification', ph:'Oui, horodatée' }
+    ]
+  },
+  {
+    id: 'reseau', icon: '🔗', label: 'Réseau / Bus de terrain',
+    expert: 'réseaux industriels et bus de terrain (Profinet, Profibus DP/PA, EtherCAT, CANopen, Modbus RTU/TCP, EtherNet/IP, IO-Link, POWERLINK)',
+    fields: [
+      { id:'r_type',  lb:'Protocole', ph:'EtherCAT · Profinet · CANopen · Modbus RTU · EtherNet/IP · IO-Link' },
+      { id:'r_topo',  lb:'Topologie et position du nœud', ph:'Ligne, 14 esclaves, le fautif est le 9e après le coupleur' },
+      { id:'r_noeud', lb:'Nœud en défaut', ph:'EK1100 station 9 · adresse Profibus 12 · esclave Modbus 5' },
+      { id:'r_led',   lb:'LED du nœud et du maître', ph:'RUN éteinte, ERR rouge clignotante 2×, Link vert' },
+      { id:'r_cpt',   lb:'Compteurs d\'erreurs / diagnostic bus', ph:'CRC 1240 sur port 2, Lost Link 3, WcState = 1' }
+    ],
+    checks: [
+      { l:'Toutes les LED de la ligne relevées, nœud par nœud', ph:'Défaut à partir du 9e' },
+      { l:'Terminaisons de bus présentes et correctes', ph:'120 Ω mesurés = 60 Ω sur CAN' },
+      { l:'Continuité et blindage du câble contrôlés', ph:'Blindage repris aux 2 extrémités' },
+      { l:'Câble déplacé / remplacé en test', ph:'Défaut suit le câble' },
+      { l:'Nœud suspect court-circuité hors ligne (bypass)', ph:'Ligne repart sans lui' },
+      { l:'Adresse / nom d\'appareil vérifié (pas de doublon)', ph:'Unique, conforme au projet' },
+      { l:'Alimentation 24 V du nœud mesurée à ses bornes', ph:'24,1 V' },
+      { l:'Configuration matérielle comparée au projet (GSD/ESI/EDS)', ph:'Révision identique' },
+      { l:'Défaut apparaît-il au démarrage d\'un autre équipement ?', ph:'Oui, quand le convoyeur démarre' }
+    ]
+  },
+  {
+    id: 'securite', icon: '🛡', label: 'Sécurité fonctionnelle',
+    expert: 'sécurité machine et relais de sécurité (Allen-Bradley Guardmaster 440R GSR, Minotaur MSR138DP, MSR210P, Pilz PNOZ, Sick, Schmersal), circuits d\'arrêt d\'urgence, surveillance de porte, STO, EDM',
+    fields: [
+      { id:'s_module', lb:'Module / dispositif de sécurité', ph:'440R-S13R2 · MSR138DP · PNOZ X3 · barrière Sick C4000' },
+      { id:'s_bornes', lb:'Bornes et tensions mesurées', ph:'S11 24 V, S12 24 V, S21 0 V, S34 absent' },
+      { id:'s_led',    lb:'LED du module', ph:'PWR vert fixe, Fault rouge 3 clignotements' },
+      { id:'s_reset',  lb:'Type de reset et retour contacteurs', ph:'Monitored manual sur X1-X4, EDM via Y1/Y2' },
+      { id:'s_chaine', lb:'Chaîne de sécurité concernée', ph:'AU pupitre + AU armoire + 3 portes en série' }
+    ],
+    checks: [
+      { l:'24 V d\'alimentation du module mesuré (A1/A2)', ph:'24,2 V' },
+      { l:'Les deux canaux d\'entrée mesurés séparément', ph:'Canal 1 OK, canal 2 à 0 V' },
+      { l:'Chaîne NF ouverte cherchée contact par contact', ph:'Ouverte sur porte 3' },
+      { l:'Bouton reset : impulsion vue par le module', ph:'Front montant présent' },
+      { l:'Retour EDM : contacts NF des contacteurs fermés au repos', ph:'Fermés' },
+      { l:'Contacteurs de sécurité : pas de contact collé', ph:'Vérifié, libres' },
+      { l:'Contacts de sortie mesurés (13/14, 23/24)', ph:'Ouverts' },
+      { l:'Configuration du module conforme au schéma (switches)', ph:'Conforme' },
+      { l:'Aucun pontage / shunt provisoire présent', ph:'Contrôlé, aucun' }
+    ],
+    warn: 'Aucune modification, aucun pontage ni neutralisation d\'une fonction de sécurité. Toute remise en service exige la validation complète de la fonction.'
+  },
+  {
+    id: 'electrique', icon: '🔌', label: 'Électrique / Puissance',
+    expert: 'circuits électriques industriels, lecture de schémas CEI/NF EN 60617 et DIN, démarrages moteurs, appareillage de protection et de commande',
+    fields: [
+      { id:'e_circuit', lb:'Circuit concerné', ph:'Puissance moteur pompe · commande 24 V · éclairage 230 V' },
+      { id:'e_prot',    lb:'Protections et repères', ph:'-QF12 disjoncteur 16 A · -FT3 relais thermique réglé 8,5 A' },
+      { id:'e_cmd',     lb:'Organes de commande', ph:'-KM4 contacteur · -KA7 relais · -KT2 temporisé 3 s' },
+      { id:'e_mes',     lb:'Tensions mesurées et points', ph:'A1/A2 bobine KM4 : 0 V — amont contact KA7 : 24 V' }
+    ],
+    checks: [
+      { l:'Absence de tension vérifiée avant intervention (VAT)', ph:'Fait, VAT testé avant/après' },
+      { l:'Tension d\'alimentation mesurée en amont', ph:'400 V entre phases' },
+      { l:'Protections : état, calibre, réarmement', ph:'QF12 déclenché, réarmé, redéclenche' },
+      { l:'Continuité des conducteurs point à point', ph:'Fil 24 continu du bornier X1:12 à KM4' },
+      { l:'Bobine du contacteur mesurée (résistance)', ph:'180 Ω' },
+      { l:'Contacts auxiliaires et NF testés', ph:'KA7 13/14 ne colle pas' },
+      { l:'Serrage des bornes et traces d\'échauffement', ph:'Point chaud sur borne L2' },
+      { l:'Isolement du départ mesuré', ph:'> 100 MΩ' },
+      { l:'Équilibre des courants sur les 3 phases', ph:'8,2 / 8,4 / 3,1 A' }
+    ]
+  },
+  {
+    id: 'capteur', icon: '📡', label: 'Capteur / Actionneur',
+    expert: 'capteurs et actionneurs industriels : détection inductive, capacitive, photoélectrique, codeurs incrémentaux et absolus, IO-Link, vérins, distributeurs et électrovannes',
+    fields: [
+      { id:'k_type',  lb:'Type et référence', ph:'Détecteur inductif M12 PNP NO · codeur incrémental 1024 pts' },
+      { id:'k_signal',lb:'Signal mesuré', ph:'0,4 V à l\'état actif au lieu de 24 V · voie A absente' },
+      { id:'k_mont',  lb:'Montage et distance de détection', ph:'Cible acier à 3 mm, portée nominale 4 mm, noyé' },
+      { id:'k_env',   lb:'Environnement', ph:'Poussière de bois, huile, vibrations, projections' }
+    ],
+    checks: [
+      { l:'Alimentation du capteur mesurée à ses bornes', ph:'24,0 V' },
+      { l:'Signal de sortie mesuré dans les 2 états', ph:'24 V / 0,3 V' },
+      { l:'Entrée automate vue en ligne pendant l\'action', ph:'I2.3 ne change pas' },
+      { l:'Test avec cible / actionnement manuel', ph:'LED capteur s\'allume' },
+      { l:'Câble et connecteur M12 contrôlés (traction, oxydation)', ph:'Connecteur humide' },
+      { l:'Capteur permuté avec un identique qui fonctionne', ph:'Défaut suit le capteur' },
+      { l:'Réglage mécanique / alignement / propreté optique', ph:'Lentille encrassée' },
+      { l:'Pour vérin : pression, débit, échappement, fin de course', ph:'6 bar, échappement libre' }
+    ]
+  },
+  {
+    id: 'mecanique', icon: '⚙', label: 'Mécanique / Fluides',
+    expert: 'mécanique industrielle, transmissions, guidages, roulements, pneumatique et hydraulique',
+    fields: [
+      { id:'m_organe', lb:'Organe mécanique', ph:'Réducteur, courroie crantée, glissière à billes, vérin' },
+      { id:'m_manif',  lb:'Manifestation', ph:'Bruit métallique cyclique, jeu 0,8 mm, vibration à 1200 tr/min' },
+      { id:'m_mesure', lb:'Mesures / relevés', ph:'Jeu au comparateur 0,8 mm · T° palier 78 °C · 5,8 bar' },
+      { id:'m_fluide', lb:'Circuit fluide (si concerné)', ph:'Pneumatique 6 bar, FRL encrassé, fuite audible au distributeur' }
+    ],
+    checks: [
+      { l:'Inspection visuelle : fuite, casse, usure, corps étranger', ph:'Copeaux dans le carter' },
+      { l:'Jeu mesuré au comparateur', ph:'0,8 mm axial' },
+      { l:'Température des paliers relevée', ph:'78 °C côté accouplement' },
+      { l:'Bruit localisé moteur tournant à vide vs en charge', ph:'Présent à vide' },
+      { l:'Tension de courroie / chaîne contrôlée', ph:'Détendue' },
+      { l:'Fixations et serrages contrôlés', ph:'2 vis desserrées' },
+      { l:'Lubrification : niveau, état, dernier graissage', ph:'Huile noire, 18 mois' },
+      { l:'Pression et débit relevés au point d\'utilisation', ph:'5,8 bar en dynamique' },
+      { l:'Rotation manuelle hors énergie : point dur ?', ph:'Point dur à 1/4 de tour' }
+    ]
+  },
+  {
+    id: 'robot', icon: '🦾', label: 'Robot',
+    expert: 'robotique industrielle, en particulier KUKA KRC2/KRC4 et programmation KRL, ainsi que l\'interfaçage robot-automate',
+    fields: [
+      { id:'b_robot', lb:'Robot et contrôleur', ph:'KUKA KR 210 R2700, KRC4, KSS 8.3' },
+      { id:'b_code',  lb:'Message / code affiché', ph:'« Écart de position axe A3 » · KSS00234' },
+      { id:'b_mode',  lb:'Mode et programme', ph:'AUT EXT, programme PALETT_01, ligne 148' },
+      { id:'b_axe',   lb:'Axe / outil / base concerné', ph:'A3 · TOOL[2] pince · BASE[1] palette' }
+    ],
+    checks: [
+      { l:'Message d\'erreur complet relevé sur le smartPAD', ph:'Copié intégralement' },
+      { l:'Mastering / calibration des axes vérifié', ph:'A3 perdu' },
+      { l:'Robot déplaçable en T1 axe par axe', ph:'A3 refuse' },
+      { l:'Circuit de sécurité et validation (homme mort) OK', ph:'OK' },
+      { l:'E/S d\'interface avec l\'automate contrôlées', ph:'$IN[12] absent' },
+      { l:'Charge outil et TCP conformes au programme', ph:'Conformes' },
+      { l:'Position de départ / HOME atteignable', ph:'Non, écart A3' },
+      { l:'Freins et jeu mécanique des axes contrôlés', ph:'Jeu net sur A3' }
+    ]
+  },
+  {
+    id: 'hmi', icon: '📺', label: 'IHM / Logiciel machine',
+    expert: 'interfaces homme-machine, supervision et logiciels de pilotage de machines industrielles (y compris machines à bois : HOMAG, Holzma, Weeke, Biesse, SCM)',
+    fields: [
+      { id:'h_hmi',   lb:'IHM / PC machine', ph:'HOMAG powerTouch · TP1200 Comfort · PC Windows machine' },
+      { id:'h_msg',   lb:'Message exact affiché', ph:'« Erreur communication CN 402 — poste 3 »' },
+      { id:'h_ctx',   lb:'Contexte logiciel', ph:'Après import d\'un programme woodWOP · après mise à jour' },
+      { id:'h_res',   lb:'Programme / recette concerné', ph:'Programme PORTE_450, autres programmes OK' }
+    ],
+    checks: [
+      { l:'Message complet et son numéro relevés', ph:'Copié à la lettre' },
+      { l:'Défaut reproduit avec un autre programme / recette', ph:'Non reproductible' },
+      { l:'Redémarrage IHM puis machine testé', ph:'Sans effet' },
+      { l:'Liaison IHM ↔ automate contrôlée', ph:'Ping OK' },
+      { l:'Espace disque, date/heure, sessions du PC machine', ph:'Disque plein à 98 %' },
+      { l:'Dernière modification logicielle ou paramètre identifiée', ph:'MAJ vendredi' },
+      { l:'Sauvegarde disponible avant retour arrière', ph:'Oui, image du 12/03' }
+    ]
+  },
+  {
+    id: 'qualite', icon: '📏', label: 'Qualité / Réglage',
+    expert: 'réglage machine et analyse de défauts qualité produit sur machines de production',
+    fields: [
+      { id:'q_defaut', lb:'Défaut produit constaté', ph:'Éclat sur le chant · cote hors tolérance de 0,4 mm' },
+      { id:'q_mesure', lb:'Mesures relevées', ph:'Cote visée 450,0 — mesurée 450,4 en fin de série' },
+      { id:'q_etendue',lb:'Étendue du défaut', ph:'Toutes les pièces · 1 sur 10 · un seul poste' },
+      { id:'q_chgt',   lb:'Changement récent', ph:'Nouvel outil monté hier, nouveau lot de matière' }
+    ],
+    checks: [
+      { l:'Défaut mesuré et quantifié (pas seulement vu)', ph:'+0,4 mm reproductible' },
+      { l:'Répartition du défaut analysée (poste, tête, série, période)', ph:'Seulement tête 2' },
+      { l:'Outil : usure, montage, serrage, référence', ph:'Arête émoussée' },
+      { l:'Matière : lot, humidité, épaisseur réelle', ph:'Nouveau lot, +0,2 mm' },
+      { l:'Paramètres machine comparés au réglage de référence', ph:'Vitesse d\'avance modifiée' },
+      { l:'Bridage, référence, butées contrôlés', ph:'Butée desserrée' },
+      { l:'Aspiration, propreté, évacuation copeaux', ph:'Aspiration faible' }
+    ]
+  },
+  {
+    id: 'general', icon: '🧰', label: 'Autre / Transversal',
+    expert: 'maintenance industrielle toutes technologies, avec une approche de diagnostic méthodique',
+    fields: [
+      { id:'g_tech', lb:'Technologie concernée', ph:'Précise le type d\'équipement' },
+      { id:'g_desc', lb:'Éléments techniques utiles', ph:'Tout ce qui aide à cadrer' }
+    ],
+    checks: [
+      { l:'Alimentations mesurées', ph:'' },
+      { l:'Signaux d\'entrée vérifiés', ph:'' },
+      { l:'Signaux de sortie vérifiés', ph:'' },
+      { l:'Élément permuté avec un identique fonctionnel', ph:'' },
+      { l:'Dernière modification / intervention identifiée', ph:'' }
+    ]
+  }
+];
+
+/* ── 3. Outillage disponible ─────────────────────────────────────── */
+const TOOLS = [
+  'Multimètre', 'Pince ampèremétrique', 'Oscilloscope', 'Testeur d\'isolement',
+  'Caméra thermique', 'Laptop + logiciel constructeur', 'Console / smartPAD',
+  'Comparateur', 'Manomètre', 'Analyseur de bus', 'Pièces de rechange sur place'
+];
+
+/* ── 4. Options de réponse ───────────────────────────────────────── */
+const OPTIONS = [
+  { id:'o_ask',   lb:'Pose-moi des questions si info manquante', on:true },
+  { id:'o_secu',  lb:'Rappeler les risques et la consignation',  on:true },
+  { id:'o_certi', lb:'Séparer fait / déduction / hypothèse',      on:true },
+  { id:'o_val',   lb:'Exiger des valeurs chiffrées',              on:true },
+  { id:'o_doc',   lb:'Citer la doc constructeur à consulter',     on:false },
+  { id:'o_prev',  lb:'Proposer un préventif pour éviter la récidive', on:false },
+  { id:'o_cout',  lb:'Estimer temps et coût des options',         on:false },
+  { id:'o_hist',  lb:'Me demander l\'historique de la machine',   on:false }
+];
+
+/* ══════════════════════════════════════════════════════════════════
+   ÉTAT ET UTILITAIRES
+   ══════════════════════════════════════════════════════════════════ */
+const S = { mode: 'diag_rapide', dom: null, spec: {}, checks: {}, tools: {}, opts: {} };
+OPTIONS.forEach(o => S.opts[o.id] = o.on);
+
+const $  = id => document.getElementById(id);
+const el = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
+const val = id => ($(id)?.value || '').trim();
+const K = k => 'atd.' + k;
+
+function store(k, v) { try { localStorage.setItem(K(k), JSON.stringify(v)); return true; } catch (e) { return false; } }
+function fetchStore(k, d) { try { const r = localStorage.getItem(K(k)); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
+
+let toastT;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RENDU DES SÉLECTEURS
+   ══════════════════════════════════════════════════════════════════ */
+function renderModes() {
+  const box = $('modeTiles'); box.innerHTML = '';
+  MODES.forEach(m => {
+    const t = el('div', 'tile' + (S.mode === m.id ? ' on' : ''));
+    t.innerHTML = '<div class="tl"><span>' + m.icon + '</span>' + m.label + '</div><div class="td">' + m.desc + '</div>';
+    t.onclick = () => { S.mode = m.id; renderModes(); refresh(); };
+    box.appendChild(t);
+  });
+  $('metaMode').textContent = MODES.find(m => m.id === S.mode).label;
+}
+
+function renderDomains() {
+  const box = $('domChips'); box.innerHTML = '';
+  DOMAINS.forEach(d => {
+    const c = el('div', 'chip' + (S.dom === d.id ? ' on' : ''));
+    c.innerHTML = '<span class="em">' + d.icon + '</span>' + d.label;
+    c.onclick = () => { S.dom = (S.dom === d.id ? null : d.id); renderDomains(); renderSpec(); renderChecks(); refresh(); };
+    box.appendChild(c);
+  });
+  const d = DOMAINS.find(x => x.id === S.dom);
+  $('metaDom').textContent = d ? d.label : 'à choisir';
+  $('domHint').textContent = d
+    ? 'Rôle donné à l\'assistant : expert en ' + d.expert.split('(')[0].trim() + '.'
+    : 'Le domaine choisi adapte les champs, la checklist de mesures et le rôle donné à l\'assistant.';
+}
+
+function renderSpec() {
+  const box = $('specFields'); box.innerHTML = '';
+  const d = DOMAINS.find(x => x.id === S.dom);
+  $('specEmpty').style.display = d ? 'none' : 'block';
+  $('specTitle').textContent = d ? 'Détails — ' + d.label : 'Détails techniques';
+  if (!d) { $('metaSpec').textContent = ''; return; }
+  d.fields.forEach(f => {
+    const w = el('div');
+    const l = el('label', 'lb'); l.textContent = f.lb;
+    const i = el('input'); i.type = 'text'; i.id = f.id; i.placeholder = f.ph;
+    i.value = S.spec[f.id] || '';
+    i.addEventListener('input', () => { S.spec[f.id] = i.value; refresh(); });
+    w.appendChild(l); w.appendChild(i); box.appendChild(w);
+  });
+}
+
+function renderChecks() {
+  const box = $('checkList'); box.innerHTML = '';
+  const d = DOMAINS.find(x => x.id === S.dom);
+  $('checkEmpty').style.display = d ? 'none' : 'block';
+  if (!d) return;
+  if (!S.checks[d.id]) S.checks[d.id] = {};
+  d.checks.forEach((c, i) => {
+    const st = S.checks[d.id][i] || { on: false, v: '' };
+    const row = el('div', 'ck' + (st.on ? ' on' : ''));
+    const head = el('div', 'ck-row');
+    head.innerHTML = '<div class="ck-box">✓</div><div class="ck-lb">' + c.l + '</div>';
+    const vb = el('div', 'ck-val');
+    const inp = el('input'); inp.type = 'text'; inp.placeholder = c.ph || 'Valeur relevée / résultat';
+    inp.value = st.v || '';
+    inp.addEventListener('input', () => { S.checks[d.id][i] = { on: true, v: inp.value }; refresh(); });
+    inp.addEventListener('click', e => e.stopPropagation());
+    vb.appendChild(inp);
+    head.onclick = () => {
+      const cur = S.checks[d.id][i] || { on: false, v: '' };
+      S.checks[d.id][i] = { on: !cur.on, v: cur.v };
+      renderChecks(); refresh();
+      if (!cur.on) { const nx = box.children[i].querySelector('input'); if (nx) nx.focus(); }
+    };
+    row.appendChild(head); row.appendChild(vb); box.appendChild(row);
+  });
+}
+
+function renderTools() {
+  const box = $('toolChips'); box.innerHTML = '';
+  TOOLS.forEach(t => {
+    const c = el('div', 'chip' + (S.tools[t] ? ' on' : ''));
+    c.textContent = t;
+    c.onclick = () => { S.tools[t] = !S.tools[t]; renderTools(); refresh(); };
+    box.appendChild(c);
+  });
+}
+
+function renderOpts() {
+  const box = $('optChips'); box.innerHTML = '';
+  OPTIONS.forEach(o => {
+    const c = el('div', 'chip' + (S.opts[o.id] ? ' on' : ''));
+    c.textContent = o.lb;
+    c.onclick = () => { S.opts[o.id] = !S.opts[o.id]; renderOpts(); refresh(); };
+    box.appendChild(c);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CONSTRUCTION DU PROMPT
+   ══════════════════════════════════════════════════════════════════ */
+function collectChecks() {
+  const d = DOMAINS.find(x => x.id === S.dom);
+  if (!d || !S.checks[d.id]) return [];
+  return d.checks.map((c, i) => {
+    const st = S.checks[d.id][i];
+    if (!st || !st.on) return null;
+    return '- ' + c.l + ' : ' + (st.v && st.v.trim() ? st.v.trim() : 'fait, conforme');
+  }).filter(Boolean);
+}
+
+function collectSpec() {
+  const d = DOMAINS.find(x => x.id === S.dom);
+  if (!d) return [];
+  return d.fields.map(f => {
+    const v = (S.spec[f.id] || '').trim();
+    return v ? '- ' + f.lb + ' : ' + v : null;
+  }).filter(Boolean);
+}
+
+function activeTools() { return TOOLS.filter(t => S.tools[t]); }
+
+function buildPrompt() {
+  const mode = MODES.find(m => m.id === S.mode);
+  const dom  = DOMAINS.find(d => d.id === S.dom);
+  const nb   = val('nbCauses') || '3';
+  const nbTxt = nb === 'tout' ? 'toutes les' : nb;
+  const prof = val('profondeur') || 'standard';
+  const L = [];
+  let n = 0;
+  const H = t => { n++; L.push(''); L.push('## ' + n + '. ' + t); };
+
+  /* En-tête */
+  L.push('# ' + mode.label.toUpperCase() + (dom ? ' — ' + dom.label.toUpperCase() : ''));
+  const idt = [val('machine'), val('section') ? 'section ' + val('section') : '', val('organe')].filter(Boolean).join(' · ');
+  if (idt) L.push('_' + idt + '_');
+
+  /* Rôle */
+  H('CONTEXTE ET RÔLE');
+  L.push('Tu es un expert en maintenance industrielle, spécialiste ' + (dom ? dom.expert : 'toutes technologies, avec une approche de diagnostic méthodique') + '.');
+  L.push('Je suis électromécanicien de maintenance industrielle. ' + mode.posture);
+  const ton = prof === 'court'
+    ? 'Réponds de façon très ramassée : listes, valeurs, repères. Aucune introduction, aucun rappel générique.'
+    : prof === 'detaille'
+      ? 'Réponds de façon complète : explique aussi le mécanisme physique derrière chaque hypothèse, je veux comprendre autant que réparer.'
+      : 'Réponds comme à un collègue compétent : technique, direct, chiffré. Pas de généralités ni de rappels évidents.';
+  L.push(ton);
+  L.push('Si tu disposes d\'une compétence spécialisée sur ce matériel ou ce protocole, utilise-la en priorité.');
+
+  /* Équipement */
+  const eq = [];
+  if (val('machine'))   eq.push('- Machine : ' + val('machine') + (val('section') ? ' — section/folio ' + val('section') : ''));
+  if (val('organe'))    eq.push('- Axe / organe : ' + val('organe'));
+  if (val('composant')) eq.push('- Composant en cause : ' + val('composant'));
+  if (val('repere'))    eq.push('- Repère / n° de série : ' + val('repere'));
+  if (eq.length) { H('ÉQUIPEMENT'); eq.forEach(x => L.push(x)); }
+
+  /* Symptôme */
+  if (val('symptome')) {
+    H('SYMPTÔME CONSTATÉ');
+    L.push(val('symptome'));
+    const ctx = [];
+    if (val('frequence')) ctx.push('- Fréquence : ' + val('frequence'));
+    if (val('depuis'))    ctx.push('- Apparu : ' + val('depuis'));
+    if (val('repro'))     ctx.push('- Reproductible : ' + val('repro'));
+    if (val('etat'))      ctx.push('- État machine : ' + val('etat'));
+    if (val('urgence'))   ctx.push('- Urgence : ' + val('urgence'));
+    if (ctx.length) { L.push(''); ctx.forEach(x => L.push(x)); }
+  }
+
+  /* Codes */
+  if (val('codes')) { H('CODES, MESSAGES, VOYANTS'); L.push('Recopiés tels qu\'affichés :'); L.push(val('codes')); }
+
+  /* Détails domaine */
+  const sp = collectSpec();
+  if (sp.length) { H('DONNÉES TECHNIQUES' + (dom ? ' — ' + dom.label.toUpperCase() : '')); sp.forEach(x => L.push(x)); }
+
+  /* Relevés */
+  const ck = collectChecks();
+  const ms = val('mesures');
+  if (ck.length || ms) {
+    H('RELEVÉS ET VÉRIFICATIONS DÉJÀ FAITS');
+    L.push('Ces points sont FAITS. Ne me les redemande pas, appuie ton raisonnement dessus.');
+    L.push('');
+    ck.forEach(x => L.push(x));
+    if (ms) L.push(ms);
+  }
+
+  /* Écarté */
+  if (val('ecarte')) {
+    H('PISTES DÉJÀ ÉCARTÉES');
+    L.push('Ne les propose pas de nouveau, sauf si tu peux justifier pourquoi mon test était insuffisant.');
+    L.push('');
+    L.push(val('ecarte'));
+  }
+
+  /* Contraintes */
+  const co = [];
+  if (activeTools().length) co.push('- Outillage disponible maintenant : ' + activeTools().join(', '));
+  if (val('pieces'))     co.push('- Pièces disponibles : ' + val('pieces'));
+  if (val('tempsAcces')) co.push('- Temps et accès : ' + val('tempsAcces'));
+  if (val('docs'))       co.push('- Documentation en main : ' + val('docs'));
+  if (co.length) {
+    H('CONTRAINTES TERRAIN');
+    L.push('Adapte tes propositions à ce que je peux réellement faire ici et maintenant.');
+    L.push('');
+    co.forEach(x => L.push(x));
+  }
+
+  /* Attendu */
+  H('CE QUE J\'ATTENDS');
+  mode.expects.forEach((e, i) => L.push((i + 1) + '. ' + e.replace('{N}', nbTxt)));
+  if (val('libre')) { L.push((mode.expects.length + 1) + '. ' + val('libre')); }
+
+  /* Règles */
+  H('RÈGLES DE RÉPONSE');
+  const R = [];
+  if (S.opts.o_ask)   R.push('Si une information critique te manque pour trancher, POSE-MOI la question au lieu de supposer — je suis devant la machine, je peux mesurer.');
+  if (S.opts.o_val)   R.push('Chiffre tout : bornes, repères, adresses, plages attendues, tolérances, paramètres. Jamais « vérifier le câblage » sans dire quel fil entre quels points.');
+  if (S.opts.o_certi) R.push('Distingue explicitement ce qui est un FAIT (issu de mes relevés), une DÉDUCTION et une HYPOTHÈSE.');
+  if (S.opts.o_secu)  R.push('Signale avant chaque test le risque (électrique, mécanique, énergie stockée, redémarrage intempestif) et si la consignation LOTO est requise ou si la mesure se fait sous tension avec EPI.');
+  if (S.opts.o_doc)   R.push('Indique la documentation constructeur à ouvrir (manuel, chapitre, table de codes) pour confirmer.');
+  if (S.opts.o_prev)  R.push('Termine par une action préventive pour éviter la récidive.');
+  if (S.opts.o_cout)  R.push('Estime pour chaque option le temps d\'intervention et le coût relatif.');
+  if (S.opts.o_hist)  R.push('Demande-moi l\'historique de la machine si cela peut orienter le diagnostic.');
+  if (dom && dom.warn) R.push(dom.warn);
+  R.push('Ne conclus pas sur un remplacement de composant tant qu\'un test discriminant ne l\'a pas désigné.');
+  R.push('Format : titres courts, listes, valeurs en gras. Pas de préambule, pas de conclusion de politesse.');
+  R.forEach(r => L.push('- ' + r));
+
+  return L.join('\n').trim() + '\n';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SCORE DE QUALITÉ
+   ══════════════════════════════════════════════════════════════════ */
+const CRITERIA = [
+  { id:'dom',   w:8,  lb:'Domaine technique',      test:() => !!S.dom,                              go:'c-dom' },
+  { id:'mach',  w:9,  lb:'Machine identifiée',     test:() => val('machine').length > 2,            go:'c-equip' },
+  { id:'org',   w:6,  lb:'Organe / repère précis', test:() => val('organe').length > 1 || val('repere').length > 1 || val('composant').length > 2, go:'c-equip' },
+  { id:'symp',  w:20, lb:'Symptôme détaillé',      test:() => val('symptome').length > 40,          go:'c-symp' },
+  { id:'ctx',   w:8,  lb:'Fréquence / apparition', test:() => !!(val('frequence') || val('depuis') || val('repro')), go:'c-symp' },
+  { id:'etat',  w:4,  lb:'État machine / urgence', test:() => !!(val('etat') || val('urgence')),    go:'c-symp' },
+  { id:'code',  w:15, lb:'Codes et messages',      test:() => val('codes').length > 3,              go:'c-codes' },
+  { id:'spec',  w:8,  lb:'Données techniques',     test:() => collectSpec().length >= 2,            go:'c-spec' },
+  { id:'mes',   w:16, lb:'Relevés et mesures',     test:() => collectChecks().length >= 3 || val('mesures').length > 40, go:'c-mes' },
+  { id:'ecar',  w:3,  lb:'Pistes écartées',        test:() => val('ecarte').length > 5,             go:'c-mes' },
+  { id:'contr', w:3,  lb:'Contraintes terrain',    test:() => activeTools().length > 0 || !!(val('pieces') || val('tempsAcces') || val('docs')), go:'c-contr' }
+];
+
+function score() {
+  let s = 0; const miss = [], ok = [];
+  CRITERIA.forEach(c => { if (c.test()) { s += c.w; ok.push(c); } else miss.push(c); });
+  return { s, miss, ok };
+}
+
+function refreshScore() {
+  const { s, miss, ok } = score();
+  const C = 2 * Math.PI * 22;
+  const col = s < 40 ? 'var(--red)' : s < 70 ? 'var(--accent)' : 'var(--green)';
+  const fg = $('ringFg');
+  fg.setAttribute('stroke-dasharray', C.toFixed(1));
+  fg.setAttribute('stroke-dashoffset', (C * (1 - s / 100)).toFixed(1));
+  fg.style.stroke = col;
+  $('ringLbl').textContent = s;
+  $('dockFill').style.width = s + '%';
+  $('dockFill').style.background = col;
+  $('dockPct').textContent = s + ' %';
+
+  const lvl = s < 25 ? ['Trop léger', 'La réponse sera générique : il manque l\'essentiel.']
+    : s < 50 ? ['Incomplet', 'Exploitable, mais l\'assistant devra deviner ou te questionner longuement.']
+    : s < 70 ? ['Correct', 'Bonne base. Les points manquants ci-dessous feront la différence.']
+    : s < 90 ? ['Solide', 'Prompt de qualité terrain : réponse ciblée et actionnable attendue.']
+    : ['Excellent', 'Dossier complet : tu obtiendras un raisonnement appuyé sur tes propres mesures.'];
+  $('scoreTitle').textContent = lvl[0] + ' — ' + s + '/100';
+  $('scoreDesc').textContent = lvl[1];
+  $('metaScore').textContent = s + '/100';
+  $('dockLbl').textContent = lvl[0];
+
+  const g = $('gaps'); g.innerHTML = '';
+  miss.sort((a, b) => b.w - a.w).slice(0, 5).forEach(c => {
+    const x = el('div', 'gap'); x.textContent = '+' + c.w + ' · ' + c.lb;
+    x.onclick = () => {
+      const card = $(c.go);
+      card.classList.remove('collapsed');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    g.appendChild(x);
+  });
+  if (!miss.length) { const x = el('div', 'gap ok'); x.textContent = '✓ Tous les critères sont couverts'; g.appendChild(x); }
+
+  /* état "rempli" des cartes */
+  const map = { 'c-dom':'dom', 'c-equip':'mach', 'c-symp':'symp', 'c-codes':'code', 'c-spec':'spec', 'c-mes':'mes', 'c-contr':'contr' };
+  Object.keys(map).forEach(cid => {
+    const c = CRITERIA.find(x => x.id === map[cid]);
+    $(cid).classList.toggle('filled', !!(c && c.test()));
+  });
+  $('c-mode').classList.add('filled');
+}
+
+function refreshMeta() {
+  $('metaEquip').textContent = val('machine') || 'non renseignée';
+  $('metaSymp').textContent  = val('symptome') ? val('symptome').slice(0, 26) + (val('symptome').length > 26 ? '…' : '') : 'à décrire';
+  $('metaCodes').textContent = val('codes') ? 'renseignés' : 'aucun';
+  $('metaSpec').textContent  = collectSpec().length ? collectSpec().length + ' champ(s)' : '';
+  const nck = collectChecks().length;
+  $('metaMes').textContent   = nck ? nck + ' point(s) vérifié(s)' : (val('mesures') ? 'notes libres' : 'aucun');
+  $('metaContr').textContent = activeTools().length ? activeTools().length + ' outil(s)' : '';
+  $('metaOut').textContent   = (MODES.find(m => m.id === S.mode) || {}).label ? ($('profondeur').value || 'standard') : '';
+}
+
+let saveT;
+function refresh() {
+  refreshMeta();
+  refreshScore();
+  clearTimeout(saveT);
+  saveT = setTimeout(() => store('auto', getData()), 400);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SAUVEGARDE / RESTAURATION
+   ══════════════════════════════════════════════════════════════════ */
+const FORM_IDS = ['machine','section','organe','composant','repere','symptome','frequence','depuis','repro',
+  'etat','urgence','codes','mesures','ecarte','pieces','tempsAcces','docs','profondeur','nbCauses','libre'];
+
+function getData() {
+  const f = {};
+  FORM_IDS.forEach(id => { const e = $(id); if (e) f[id] = e.value; });
+  return { v: 2, mode: S.mode, dom: S.dom, spec: S.spec, checks: S.checks, tools: S.tools, opts: S.opts, form: f };
+}
+
+function setData(d) {
+  if (!d) return;
+  S.mode   = d.mode || 'diag_rapide';
+  S.dom    = d.dom || null;
+  S.spec   = d.spec || {};
+  S.checks = d.checks || {};
+  S.tools  = d.tools || {};
+  S.opts   = Object.assign({}, S.opts, d.opts || {});
+  FORM_IDS.forEach(id => { const e = $(id); if (e && d.form && d.form[id] !== undefined) e.value = d.form[id]; });
+  renderModes(); renderDomains(); renderSpec(); renderChecks(); renderTools(); renderOpts(); refresh();
+}
+
+function rememberMachine() {
+  const m = val('machine'); if (m.length < 3) return;
+  const list = fetchStore('machines', []);
+  if (!list.includes(m)) { list.unshift(m); store('machines', list.slice(0, 25)); fillMachines(); }
+}
+function fillMachines() {
+  const dl = $('dl-machines'); dl.innerHTML = '';
+  fetchStore('machines', []).forEach(m => { const o = el('option'); o.value = m; dl.appendChild(o); });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   APERÇU, COPIE, PARTAGE
+   ══════════════════════════════════════════════════════════════════ */
+function openSheet() {
+  const txt = buildPrompt();
+  $('preview').textContent = txt;
+  $('preview').style.display = 'block';
+  libBox.style.display = 'none';
+  $('sheet').querySelector('h3').textContent = 'Prompt généré';
+  $('sheetMeta').textContent = txt.split('\n').length + ' lignes · ' + txt.length + ' car.';
+  $('sheet').querySelector('.sheet-foot').style.display = 'flex';
+  $('sheet').classList.add('open');
+}
+function closeSheet() { $('sheet').classList.remove('open'); }
+
+function copyText(text, msg) {
+  const done = () => toast(msg || '✓ Prompt copié — colle-le dans Claude');
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const ta = el('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { toast('Copie impossible — sélectionne le texte'); }
+  document.body.removeChild(ta);
+}
+
+function pushHistory(text) {
+  const h = fetchStore('history', []);
+  const title = [val('machine'), val('symptome').slice(0, 40)].filter(Boolean).join(' — ') || 'Sans titre';
+  h.unshift({ ts: Date.now(), title: title, mode: S.mode, dom: S.dom, text: text, data: getData() });
+  store('history', h.slice(0, 20));
+}
+
+function doCopy() {
+  const t = buildPrompt();
+  copyText(t);
+  pushHistory(t);
+  rememberMachine();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BIBLIOTHÈQUE (brouillons + historique)
+   ══════════════════════════════════════════════════════════════════ */
+const libBox = el('div');
+libBox.style.cssText = 'max-width:860px;margin:0 auto;display:none';
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('fr-CA') + ' ' + d.toTimeString().slice(0, 5);
+}
+
+function openLibrary() {
+  const drafts = fetchStore('drafts', []);
+  const hist = fetchStore('history', []);
+  libBox.innerHTML = '';
+
+  const mk = (titre, items, kind) => {
+    const h = el('div');
+    h.style.cssText = 'font-family:var(--mono);font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--text-faint);margin:4px 0 8px';
+    h.textContent = titre + ' (' + items.length + ')';
+    libBox.appendChild(h);
+    if (!items.length) {
+      const e2 = el('div'); e2.style.cssText = 'font-size:13px;color:var(--text-faint);margin-bottom:18px';
+      e2.textContent = kind === 'd' ? 'Aucun brouillon enregistré.' : 'Aucun prompt généré pour l\'instant.';
+      libBox.appendChild(e2); return;
+    }
+    items.forEach((it, i) => {
+      const c = el('div', 'card'); c.style.marginBottom = '9px';
+      const b = el('div'); b.style.padding = '11px 13px';
+      const t = el('div'); t.style.cssText = 'font-size:13.5px;font-weight:600;margin-bottom:3px';
+      t.textContent = it.name || it.title;
+      const s2 = el('div'); s2.style.cssText = 'font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-bottom:9px';
+      const dm = DOMAINS.find(x => x.id === it.dom);
+      s2.textContent = fmtDate(it.ts) + (dm ? ' · ' + dm.label : '');
+      const row = el('div', 'row-btn');
+      const bl = el('button', 'btn btn-s btn-sm'); bl.textContent = 'Charger';
+      bl.onclick = () => { setData(it.data); closeSheet(); toast('✓ Chargé'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      row.appendChild(bl);
+      if (kind === 'h') {
+        const bc = el('button', 'btn btn-s btn-sm'); bc.textContent = 'Copier';
+        bc.onclick = () => copyText(it.text);
+        row.appendChild(bc);
+      }
+      const bd = el('button', 'btn btn-d btn-sm'); bd.textContent = 'Supprimer';
+      bd.onclick = () => {
+        const arr = kind === 'd' ? fetchStore('drafts', []) : fetchStore('history', []);
+        arr.splice(i, 1); store(kind === 'd' ? 'drafts' : 'history', arr); openLibrary();
+      };
+      row.appendChild(bd);
+      b.appendChild(t); b.appendChild(s2); b.appendChild(row); c.appendChild(b); libBox.appendChild(c);
+    });
+    const sp = el('div'); sp.style.height = '18px'; libBox.appendChild(sp);
+  };
+
+  mk('Brouillons enregistrés', drafts, 'd');
+  mk('Prompts générés récemment', hist, 'h');
+
+  $('preview').style.display = 'none';
+  libBox.style.display = 'block';
+  $('sheet').querySelector('h3').textContent = 'Brouillons & historique';
+  $('sheetMeta').textContent = '';
+  $('sheet').querySelector('.sheet-foot').style.display = 'none';
+  $('sheet').classList.add('open');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   EXEMPLE PRÉ-REMPLI
+   ══════════════════════════════════════════════════════════════════ */
+const DEMO = {
+  mode: 'diag_rapide', dom: 'variateur',
+  spec: {
+    v_modele: 'KEB Combivert F5 Multi, 11 kVA, firmware 2.3',
+    v_moteur: 'Asynchrone 5,5 kW 400 V avec frein, retour codeur incrémental',
+    v_ctrl: 'Vectoriel avec retour codeur',
+    v_param: 'Rampe accél. 0,4 s · limite courant 160 % · découpage 8 kHz'
+  },
+  checks: { variateur: {
+    0: { on: true, v: '400 V équilibré entre phases, stable en charge' },
+    1: { on: true, v: '545 V au repos, chute à 470 V à l\'accélération' },
+    2: { on: true, v: 'U 12,4 A · V 12,1 A · W 8,7 A (nominal 11,2 A)' },
+    3: { on: true, v: '> 50 MΩ sous 500 V, les 3 phases' },
+    7: { on: true, v: 'Filtre armoire encrassé, 42 °C mesurés' },
+    8: { on: true, v: '3 défauts E.OC en 2 jours, toujours à l\'accélération' }
+  } },
+  tools: { 'Multimètre': true, 'Pince ampèremétrique': true, 'Oscilloscope': true, 'Laptop + logiciel constructeur': true },
+  opts: { o_ask: true, o_secu: true, o_certi: true, o_val: true, o_prev: true },
+  form: {
+    machine: 'HOMAG TBH501', section: '451', organe: 'N30R — avance droit',
+    composant: 'Variateur KEB F5 axe N30R', repere: '-T451 / armoire A2',
+    symptome: 'Le variateur de l\'axe d\'avance déclenche en surintensité pendant la phase d\'accélération, uniquement quand la machine enchaîne les cycles. À froid le matin, aucun défaut pendant la première heure. Le moteur ne fait pas de bruit anormal et l\'axe se déplace normalement à la main hors tension.',
+    frequence: 'Intermittent, 3 à 4 fois par jour', depuis: 'Lundi, après le changement de programme de la série 450',
+    repro: 'Oui, en enchaînant des cycles rapides pendant 20 min',
+    etat: 'En marche — défaut intermittent', urgence: 'Haute — reprise attendue dans l\'heure',
+    codes: 'E.OC (surintensité) sur l\'afficheur du variateur — 3 occurrences dans l\'historique\nHMI : « Axe N30R — défaut entraînement, acquitter »\nAucun défaut sur les axes voisins',
+    mesures: '- Courant déséquilibré : la phase W est nettement plus basse que U et V\n- Le déclenchement arrive toujours entre 0 et 0,3 s après l\'ordre d\'avance\n- Aucun défaut si la rampe est allongée manuellement à 1,2 s',
+    ecarte: '- Câble moteur remplacé mardi par un neuf : défaut identique\n- Codeur permuté avec celui de l\'axe jumeau N30L : défaut reste sur N30R',
+    pieces: '1 variateur F5 identique en stock, jeu de fusibles, contacteur',
+    tempsAcces: '45 min avant la reprise de poste · armoire A2 accessible sans démontage',
+    docs: 'Schéma électrique folios 10 à 14, manuel KEB F5, sauvegarde des paramètres du 12/03',
+    profondeur: 'standard', nbCauses: '3',
+    libre: 'Compare avec le comportement de l\'axe jumeau N30L, identique et sans défaut.'
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════════
+   INITIALISATION
+   ══════════════════════════════════════════════════════════════════ */
+(function init() {
+  /* thème */
+  const applyTheme = t => {
+    document.documentElement.setAttribute('data-theme', t);
+    $('btnTheme').textContent = t === 'dark' ? '☀' : '☾';
+  };
+  applyTheme(fetchStore('theme', 'dark'));
+  $('btnTheme').onclick = () => {
+    const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(cur); store('theme', cur);
+  };
+
+  /* accordéons */
+  document.querySelectorAll('[data-toggle]').forEach(h => {
+    h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
+  });
+
+  /* sheet */
+  $('sheet').querySelector('.sheet-body').appendChild(libBox);
+  $('btnPreview').onclick = openSheet;
+  $('btnCloseSheet').onclick = closeSheet;
+  $('btnCopy').onclick = doCopy;
+  $('btnCopy2').onclick = doCopy;
+  $('btnMenu').onclick = openLibrary;
+  $('btnShare').onclick = () => {
+    const t = buildPrompt();
+    if (navigator.share) navigator.share({ title: 'Diagnostic terrain', text: t }).then(() => pushHistory(t)).catch(() => {});
+    else copyText(t, '✓ Partage indisponible — prompt copié');
+  };
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSheet();
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doCopy(); }
+  });
+
+  /* actions */
+  $('btnSave').onclick = () => {
+    const def = val('machine') ? val('machine') + ' — ' + new Date().toLocaleDateString('fr-CA') : 'Brouillon ' + new Date().toLocaleDateString('fr-CA');
+    const name = window.prompt('Nom du brouillon :', def);
+    if (!name) return;
+    const arr = fetchStore('drafts', []);
+    arr.unshift({ name: name, ts: Date.now(), dom: S.dom, data: getData() });
+    if (store('drafts', arr.slice(0, 30))) { rememberMachine(); toast('✓ Brouillon enregistré'); }
+    else toast('Stockage indisponible sur ce navigateur');
+  };
+  $('btnLoad').onclick = openLibrary;
+  $('btnDemo').onclick = () => {
+    if (!window.confirm('Charger l\'exemple ? Le contenu actuel sera remplacé.')) return;
+    setData(DEMO); toast('✓ Exemple chargé'); window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  $('btnReset').onclick = () => {
+    if (!window.confirm('Effacer tous les champs du formulaire ?')) return;
+    FORM_IDS.forEach(id => { const e = $(id); if (e) e.value = (id === 'profondeur' ? 'standard' : id === 'nbCauses' ? '3' : ''); });
+    S.spec = {}; S.checks = {}; S.tools = {};
+    renderSpec(); renderChecks(); renderTools(); refresh();
+    toast('✓ Formulaire réinitialisé');
+  };
+
+  /* écoute des champs */
+  FORM_IDS.forEach(id => {
+    const e = $(id); if (!e) return;
+    e.addEventListener('input', refresh);
+    e.addEventListener('change', refresh);
+  });
+  $('machine').addEventListener('blur', rememberMachine);
+
+  /* rendu initial */
+  renderModes(); renderDomains(); renderSpec(); renderChecks(); renderTools(); renderOpts();
+  fillMachines();
+  const auto = fetchStore('auto', null);
+  if (auto) setData(auto); else refresh();
+})();
+</script>
+
+</body>
+</html>
