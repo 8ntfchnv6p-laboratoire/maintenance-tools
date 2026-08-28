@@ -13,9 +13,14 @@ la mesure, et signale ce qui manque avant que tu envoies.
 
 ### Ouvrir
 
-Fichier unique, sans dépendance, sans réseau : ouvre `index.html` dans n'importe quel navigateur
-(PC, tablette, téléphone). Sur téléphone, « Ajouter à l'écran d'accueil » suffit à l'avoir sous la main
-dans l'atelier, y compris hors connexion.
+**Version en ligne** : publiée en Artifact, accessible depuis n'importe quel appareil connecté.
+
+**Version locale** : `index.html` est un fichier unique, sans dépendance ni appel réseau obligatoire
+(les polices se chargent si le réseau est là, sinon la pile système prend le relais à l'identique).
+Ouvre-le dans n'importe quel navigateur — PC, tablette, téléphone. Sur téléphone,
+« Ajouter à l'écran d'accueil » suffit à l'avoir sous la main dans l'atelier, hors connexion.
+
+Le thème suit celui de l'appareil ; le bouton ☀/☾ le force et retient le choix.
 
 ### Ce que ça fait
 
@@ -63,6 +68,18 @@ Bouton `Exemple rempli` : un cas complet noté 100/100 pour voir le niveau de d�
 
 Tout reste sur l'appareil (`localStorage`) : brouillons nommés, 20 derniers prompts générés,
 sauvegarde automatique du formulaire en cours, machines déjà saisies. Aucun envoi, aucun compte.
+
+## Publier la version Artifact — `build-artifact.js`
+
+Un Artifact fournit lui-même le squelette `<!doctype html><head></head><body>` : la page publiée
+ne doit donc contenir aucune de ces balises. `index.html` reste la source unique, et le script
+n'en dérive que l'emballage — même CSS, même code, même comportement :
+
+```
+node build-artifact.js     # → artifact/atelier-diagnostic.html
+```
+
+À relancer après chaque modification de `index.html`, avant de republier.
 
 ## `diagnostic-template.html`
 
