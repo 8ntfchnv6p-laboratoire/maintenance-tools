@@ -1,0 +1,44 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "ca.maison.naturehome"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "ca.maison.naturehome"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    signingConfigs {
+        // Clé non secrète versionnée : garantit que chaque build CI a la même
+        // signature, donc « adb install -r » met à jour sans désinstaller.
+        shared {
+            storeFile file("naturehome.keystore")
+            storePassword "naturehome"
+            keyAlias "naturehome"
+            keyPassword "naturehome"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt")
+            signingConfig signingConfigs.shared
+        }
+        debug {
+            signingConfig signingConfigs.shared
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

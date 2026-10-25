@@ -1,0 +1,9 @@
+launcher/.gradle/
+launcher/build/
+launcher/app/build/
+launcher/local.properties
+launcher/NatureHome.apk
+backups/
+wallpapers/
+tv-state.json
+__pycache__/
