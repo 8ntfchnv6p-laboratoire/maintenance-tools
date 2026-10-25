@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -166,6 +167,8 @@ public class MainActivity extends Activity {
 
         int before = walls.photoCount();
         walls.rescan();
+        // Lu par tvtool.py pour vérifier que les photos envoyées sont bien visibles.
+        Log.i("NatureHome", "photos=" + walls.photoCount());
         ui.removeCallbacks(rotate);
         if (!hasWallpaper || before != walls.photoCount()) {
             ui.post(rotate);
